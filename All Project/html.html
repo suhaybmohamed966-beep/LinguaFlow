@@ -1,0 +1,2259 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+<meta name="theme-color" content="#1A6FE8" />
+<meta name="apple-mobile-web-app-capable" content="yes" />
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+<title>LinguaFlow – Learn English</title>
+
+<!-- ============================================================
+     LINGUAFLOW — ENGLISH LEARNING APP
+     Single-file PWA-ready mobile application
+     Features: Auth, Dashboard, 7 Lesson Categories, Quizzes,
+               Progress Tracking, Dark Mode, Certificate
+     ============================================================ -->
+
+<style>
+/* ── 1. CSS VARIABLES & RESETS ─────────────────────────────── */
+:root {
+  --c-primary:     #1A6FE8;
+  --c-primary-d:   #1058C0;
+  --c-primary-l:   #E8F0FD;
+  --c-secondary:   #6C3EE8;
+  --c-accent:      #00C9A7;
+  --c-gold:        #F7B731;
+  --c-danger:      #E84646;
+  --c-bg:          #F4F7FF;
+  --c-surface:     #FFFFFF;
+  --c-surface2:    #F0F4FE;
+  --c-border:      rgba(26,111,232,0.13);
+  --c-text:        #1A1D2E;
+  --c-text2:       #5A6070;
+  --c-text3:       #9AA0B4;
+  --c-nav:         #FFFFFF;
+  --c-splash1:     #0B40A8;
+  --c-splash2:     #1A6FE8;
+  --c-splash3:     #4AABFF;
+  --radius-sm:     8px;
+  --radius-md:     14px;
+  --radius-lg:     22px;
+  --radius-xl:     32px;
+  --shadow-sm:     0 2px 12px rgba(26,111,232,0.08);
+  --shadow-md:     0 6px 28px rgba(26,111,232,0.14);
+  --shadow-lg:     0 16px 48px rgba(26,111,232,0.20);
+  --font:          'Nunito', system-ui, sans-serif;
+  --transition:    0.25s cubic-bezier(0.4,0,0.2,1);
+}
+[data-theme="dark"] {
+  --c-primary:     #4A9FFF;
+  --c-primary-d:   #2E7BE0;
+  --c-primary-l:   #0E2240;
+  --c-secondary:   #9B72FF;
+  --c-accent:      #00E6C3;
+  --c-gold:        #FFD166;
+  --c-danger:      #FF6B6B;
+  --c-bg:          #0D1117;
+  --c-surface:     #161B27;
+  --c-surface2:    #1E2538;
+  --c-border:      rgba(74,159,255,0.12);
+  --c-text:        #E8ECFA;
+  --c-text2:       #8A93B0;
+  --c-text3:       #505870;
+  --c-nav:         #161B27;
+  --shadow-sm:     0 2px 12px rgba(0,0,0,0.3);
+  --shadow-md:     0 6px 28px rgba(0,0,0,0.4);
+  --shadow-lg:     0 16px 48px rgba(0,0,0,0.5);
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+html,body{width:100%;height:100%;overflow:hidden;background:var(--c-bg);font-family:var(--font);color:var(--c-text);-webkit-font-smoothing:antialiased}
+button{font-family:inherit;cursor:pointer;border:none;background:none;outline:none}
+input{font-family:inherit;outline:none;border:none}
+a{text-decoration:none;color:inherit}
+img{display:block;max-width:100%}
+ul,ol{list-style:none}
+/* ── 2. APP SHELL ───────────────────────────────────────────── */
+#app{
+  position:relative;width:100%;height:100dvh;max-width:430px;
+  margin:0 auto;overflow:hidden;background:var(--c-bg);
+  display:flex;flex-direction:column;
+}
+/* Screens */
+.screen{
+  position:absolute;inset:0;display:flex;flex-direction:column;
+  overflow-y:auto;overflow-x:hidden;
+  opacity:0;pointer-events:none;transform:translateY(20px);
+  transition:opacity var(--transition),transform var(--transition);
+  -webkit-overflow-scrolling:touch;
+}
+.screen.active{opacity:1;pointer-events:all;transform:translateY(0)}
+.screen.slide-left{transform:translateX(100%);opacity:1}
+.screen.slide-right{transform:translateX(-100%);opacity:1}
+/* ── 3. SPLASH ──────────────────────────────────────────────── */
+#screen-splash{
+  background:linear-gradient(145deg,var(--c-splash1) 0%,var(--c-splash2) 55%,var(--c-splash3) 100%);
+  align-items:center;justify-content:center;gap:20px;
+  overflow:hidden;
+}
+.splash-bg{
+  position:absolute;inset:0;overflow:hidden;pointer-events:none;
+}
+.splash-circle{
+  position:absolute;border-radius:50%;opacity:.15;
+  background:rgba(255,255,255,0.6);
+  animation:floatCircle 6s ease-in-out infinite;
+}
+.splash-circle:nth-child(1){width:300px;height:300px;top:-80px;left:-80px;animation-delay:0s}
+.splash-circle:nth-child(2){width:200px;height:200px;bottom:-60px;right:-40px;animation-delay:2s}
+.splash-circle:nth-child(3){width:150px;height:150px;bottom:120px;left:30px;animation-delay:4s}
+@keyframes floatCircle{0%,100%{transform:scale(1) translateY(0)}50%{transform:scale(1.08) translateY(-12px)}}
+.splash-logo{
+  position:relative;z-index:2;
+  width:90px;height:90px;background:rgba(255,255,255,0.18);
+  border-radius:24px;border:2px solid rgba(255,255,255,0.35);
+  display:flex;align-items:center;justify-content:center;
+  animation:logoPop 0.8s cubic-bezier(0.34,1.56,0.64,1) 0.3s both;
+  backdrop-filter:blur(10px);
+}
+.splash-logo svg{width:52px;height:52px}
+@keyframes logoPop{from{opacity:0;transform:scale(0.5)}to{opacity:1;transform:scale(1)}}
+.splash-text{
+  position:relative;z-index:2;text-align:center;
+  animation:fadeUp 0.7s ease 0.7s both;
+}
+.splash-text h1{font-size:32px;font-weight:800;color:#fff;letter-spacing:-0.5px}
+.splash-text p{font-size:15px;color:rgba(255,255,255,0.75);margin-top:6px;font-weight:500}
+@keyframes fadeUp{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:translateY(0)}}
+.splash-loader{
+  position:relative;z-index:2;margin-top:16px;
+  animation:fadeUp 0.7s ease 1.1s both;
+}
+.splash-dots{display:flex;gap:8px}
+.splash-dot{
+  width:8px;height:8px;border-radius:50%;background:rgba(255,255,255,0.5);
+  animation:dotBounce 1.4s ease-in-out infinite;
+}
+.splash-dot:nth-child(1){animation-delay:0s}
+.splash-dot:nth-child(2){animation-delay:0.2s}
+.splash-dot:nth-child(3){animation-delay:0.4s}
+@keyframes dotBounce{0%,80%,100%{transform:scale(1);background:rgba(255,255,255,0.4)}40%{transform:scale(1.4);background:#fff}}
+/* ── 4. AUTH SCREENS ────────────────────────────────────────── */
+#screen-login,#screen-signup{
+  background:var(--c-bg);padding-bottom:32px;
+}
+.auth-hero{
+  background:linear-gradient(145deg,var(--c-primary-d),var(--c-primary));
+  padding:48px 28px 40px;position:relative;overflow:hidden;
+  border-radius:0 0 36px 36px;
+}
+.auth-hero-deco{
+  position:absolute;right:-30px;top:-30px;width:180px;height:180px;
+  border-radius:50%;background:rgba(255,255,255,0.08);
+}
+.auth-hero-deco2{
+  position:absolute;left:-20px;bottom:-40px;width:120px;height:120px;
+  border-radius:50%;background:rgba(255,255,255,0.06);
+}
+.auth-logo-sm{
+  width:52px;height:52px;background:rgba(255,255,255,0.2);
+  border-radius:16px;display:flex;align-items:center;justify-content:center;
+  margin-bottom:16px;border:1.5px solid rgba(255,255,255,0.3);
+}
+.auth-logo-sm svg{width:30px;height:30px}
+.auth-hero h2{font-size:26px;font-weight:800;color:#fff;line-height:1.2}
+.auth-hero p{font-size:14px;color:rgba(255,255,255,0.72);margin-top:6px;font-weight:500}
+.auth-body{padding:28px 24px 0}
+.form-group{margin-bottom:18px}
+.form-label{font-size:13px;font-weight:700;color:var(--c-text2);margin-bottom:8px;display:block;letter-spacing:0.3px}
+.form-input{
+  width:100%;height:52px;background:var(--c-surface);
+  border:1.5px solid var(--c-border);border-radius:var(--radius-md);
+  padding:0 16px 0 48px;font-size:15px;color:var(--c-text);
+  transition:border-color var(--transition),box-shadow var(--transition);
+  position:relative;
+}
+.form-input:focus{border-color:var(--c-primary);box-shadow:0 0 0 4px rgba(26,111,232,0.1)}
+.input-wrap{position:relative}
+.input-icon{
+  position:absolute;left:16px;top:50%;transform:translateY(-50%);
+  color:var(--c-text3);font-size:18px;pointer-events:none;
+}
+.btn-primary{
+  width:100%;height:54px;border-radius:var(--radius-lg);
+  background:linear-gradient(135deg,var(--c-primary),var(--c-secondary));
+  color:#fff;font-size:16px;font-weight:700;letter-spacing:0.3px;
+  box-shadow:var(--shadow-md);
+  transition:transform var(--transition),box-shadow var(--transition),opacity var(--transition);
+  display:flex;align-items:center;justify-content:center;gap:8px;
+}
+.btn-primary:active{transform:scale(0.97);box-shadow:var(--shadow-sm)}
+.btn-secondary{
+  width:100%;height:54px;border-radius:var(--radius-lg);
+  background:var(--c-surface);color:var(--c-primary);font-size:16px;font-weight:700;
+  border:1.5px solid var(--c-border);
+  transition:transform var(--transition),background var(--transition);
+}
+.btn-secondary:active{transform:scale(0.97);background:var(--c-primary-l)}
+.auth-switch{
+  text-align:center;margin-top:20px;font-size:14px;color:var(--c-text2);
+}
+.auth-switch a{color:var(--c-primary);font-weight:700}
+.auth-divider{
+  display:flex;align-items:center;gap:12px;margin:20px 0;
+}
+.auth-divider span{font-size:12px;color:var(--c-text3);white-space:nowrap}
+.auth-divider::before,.auth-divider::after{content:'';flex:1;height:1px;background:var(--c-border)}
+/* ── 5. BOTTOM NAV ──────────────────────────────────────────── */
+#bottom-nav{
+  position:relative;z-index:100;
+  background:var(--c-nav);border-top:1px solid var(--c-border);
+  display:none;flex-direction:row;
+  padding:8px 0 max(8px,env(safe-area-inset-bottom));
+  box-shadow:0 -4px 20px rgba(26,111,232,0.07);
+}
+#bottom-nav.visible{display:flex}
+.nav-item{
+  flex:1;display:flex;flex-direction:column;align-items:center;gap:3px;
+  padding:4px 0;border-radius:var(--radius-md);transition:opacity var(--transition);
+}
+.nav-item .nav-icon{
+  width:32px;height:32px;display:flex;align-items:center;justify-content:center;
+  border-radius:10px;transition:background var(--transition),transform var(--transition);
+  font-size:20px;color:var(--c-text3);
+}
+.nav-item.active .nav-icon{
+  background:var(--c-primary-l);color:var(--c-primary);transform:translateY(-1px);
+}
+.nav-item span{font-size:11px;font-weight:600;color:var(--c-text3);transition:color var(--transition)}
+.nav-item.active span{color:var(--c-primary)}
+/* ── 6. DASHBOARD ───────────────────────────────────────────── */
+#screen-dashboard{background:var(--c-bg);padding-bottom:16px}
+.page-content{flex:1;overflow-y:auto;padding-bottom:16px}
+.dash-header{
+  background:linear-gradient(145deg,var(--c-primary-d),var(--c-primary));
+  padding:52px 24px 28px;border-radius:0 0 32px 32px;position:relative;overflow:hidden;
+}
+.dash-header-deco{
+  position:absolute;right:-20px;top:-20px;width:160px;height:160px;
+  border-radius:50%;background:rgba(255,255,255,0.07);
+}
+.dash-top-row{display:flex;justify-content:space-between;align-items:center;margin-bottom:20px}
+.dash-greeting{
+  font-size:13px;color:rgba(255,255,255,0.7);font-weight:600;letter-spacing:0.4px;
+}
+.dash-name{font-size:22px;font-weight:800;color:#fff;margin-top:2px;line-height:1.2}
+.dash-avatar{
+  width:46px;height:46px;border-radius:50%;background:rgba(255,255,255,0.2);
+  border:2.5px solid rgba(255,255,255,0.4);display:flex;align-items:center;
+  justify-content:center;font-size:20px;font-weight:700;color:#fff;
+}
+.dash-stats-row{display:flex;gap:10px}
+.dash-stat{
+  flex:1;background:rgba(255,255,255,0.14);border-radius:14px;
+  padding:12px;border:1px solid rgba(255,255,255,0.18);
+  backdrop-filter:blur(8px);
+}
+.dash-stat-val{font-size:22px;font-weight:800;color:#fff}
+.dash-stat-lbl{font-size:11px;color:rgba(255,255,255,0.7);font-weight:600;margin-top:2px}
+/* Search */
+.search-bar{
+  margin:20px 20px 0;position:relative;
+}
+.search-input{
+  width:100%;height:48px;border-radius:var(--radius-lg);
+  background:var(--c-surface);border:1.5px solid var(--c-border);
+  padding:0 16px 0 46px;font-size:14px;color:var(--c-text);
+  transition:border-color var(--transition),box-shadow var(--transition);
+}
+.search-input:focus{border-color:var(--c-primary);box-shadow:0 0 0 4px rgba(26,111,232,0.1)}
+.search-icon{
+  position:absolute;left:16px;top:50%;transform:translateY(-50%);
+  font-size:18px;color:var(--c-text3);pointer-events:none;
+}
+/* Section headers */
+.section-header{
+  display:flex;justify-content:space-between;align-items:center;
+  padding:20px 20px 12px;
+}
+.section-title{font-size:17px;font-weight:800;color:var(--c-text)}
+.section-link{font-size:13px;font-weight:700;color:var(--c-primary)}
+/* Streak card */
+.streak-card{
+  margin:0 20px;background:linear-gradient(135deg,#FF6B35,#FF3366);
+  border-radius:var(--radius-lg);padding:18px 20px;
+  display:flex;align-items:center;gap:16px;
+  box-shadow:0 8px 24px rgba(255,51,102,0.25);
+  overflow:hidden;position:relative;
+}
+.streak-card::after{
+  content:'';position:absolute;right:-10px;top:-10px;
+  width:100px;height:100px;border-radius:50%;
+  background:rgba(255,255,255,0.08);
+}
+.streak-flame{font-size:44px;filter:drop-shadow(0 2px 8px rgba(255,150,50,0.4))}
+.streak-info{flex:1}
+.streak-info h3{font-size:15px;font-weight:700;color:rgba(255,255,255,0.85)}
+.streak-info p{font-size:28px;font-weight:800;color:#fff;line-height:1.1}
+.streak-info span{font-size:12px;color:rgba(255,255,255,0.7);font-weight:600}
+/* Progress bar */
+.progress-card{
+  margin:0 20px;background:var(--c-surface);border-radius:var(--radius-lg);
+  padding:18px 20px;border:1.5px solid var(--c-border);box-shadow:var(--shadow-sm);
+}
+.progress-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:14px}
+.progress-title{font-size:15px;font-weight:700;color:var(--c-text)}
+.progress-pct{font-size:15px;font-weight:800;color:var(--c-primary)}
+.progress-bar-bg{height:10px;border-radius:99px;background:var(--c-surface2);overflow:hidden}
+.progress-bar-fill{
+  height:100%;border-radius:99px;
+  background:linear-gradient(90deg,var(--c-primary),var(--c-secondary));
+  transition:width 0.8s cubic-bezier(0.4,0,0.2,1);
+}
+.progress-steps{display:flex;gap:8px;margin-top:14px;flex-wrap:wrap}
+.step-badge{
+  font-size:11px;font-weight:700;padding:4px 10px;border-radius:99px;
+  background:var(--c-surface2);color:var(--c-text2);
+}
+.step-badge.done{background:var(--c-primary-l);color:var(--c-primary)}
+/* Lesson categories grid */
+.categories-grid{
+  display:grid;grid-template-columns:1fr 1fr;gap:12px;
+  padding:0 20px 20px;
+}
+.cat-card{
+  background:var(--c-surface);border-radius:var(--radius-lg);
+  padding:18px 16px;border:1.5px solid var(--c-border);
+  box-shadow:var(--shadow-sm);cursor:pointer;
+  transition:transform var(--transition),box-shadow var(--transition);
+  position:relative;overflow:hidden;
+}
+.cat-card::before{
+  content:'';position:absolute;right:-10px;bottom:-10px;
+  width:70px;height:70px;border-radius:50%;opacity:0.08;
+  background:currentColor;
+}
+.cat-card:active{transform:scale(0.97);box-shadow:var(--shadow-sm)}
+.cat-icon{
+  width:46px;height:46px;border-radius:14px;
+  display:flex;align-items:center;justify-content:center;
+  font-size:22px;margin-bottom:12px;
+}
+.cat-title{font-size:14px;font-weight:800;color:var(--c-text);line-height:1.2}
+.cat-count{font-size:12px;font-weight:600;color:var(--c-text2);margin-top:3px}
+.cat-progress{height:4px;border-radius:99px;background:var(--c-surface2);margin-top:10px}
+.cat-progress-fill{height:100%;border-radius:99px;transition:width 0.6s ease}
+/* Category color schemes */
+.cat-alphabet .cat-icon{background:#FFF0E6;color:#FF6B35}
+.cat-alphabet .cat-progress-fill{background:linear-gradient(90deg,#FF6B35,#FF9A5C)}
+.cat-vocabulary .cat-icon{background:#E8F5E9;color:#43A047}
+.cat-vocabulary .cat-progress-fill{background:linear-gradient(90deg,#43A047,#81C784)}
+.cat-grammar .cat-icon{background:#EDE7F6;color:#7E57C2}
+.cat-grammar .cat-progress-fill{background:linear-gradient(90deg,#7E57C2,#B39DDB)}
+.cat-speaking .cat-icon{background:#E3F2FD;color:#1E88E5}
+.cat-speaking .cat-progress-fill{background:linear-gradient(90deg,#1E88E5,#64B5F6)}
+.cat-listening .cat-icon{background:#FCE4EC;color:#E91E63}
+.cat-listening .cat-progress-fill{background:linear-gradient(90deg,#E91E63,#F48FB1)}
+.cat-reading .cat-icon{background:#E8F5E9;color:#00897B}
+.cat-reading .cat-progress-fill{background:linear-gradient(90deg,#00897B,#4DB6AC)}
+.cat-writing .cat-icon{background:#FFF8E1;color:#F9A825}
+.cat-writing .cat-progress-fill{background:linear-gradient(90deg,#F9A825,#FFD54F)}
+/* ── 7. LESSON SCREEN ───────────────────────────────────────── */
+#screen-lesson{background:var(--c-bg)}
+.lesson-header{
+  background:var(--c-surface);padding:52px 20px 20px;
+  border-bottom:1px solid var(--c-border);display:flex;align-items:center;gap:14px;
+}
+.back-btn{
+  width:38px;height:38px;border-radius:12px;background:var(--c-surface2);
+  display:flex;align-items:center;justify-content:center;font-size:20px;color:var(--c-text);
+  flex-shrink:0;
+}
+.lesson-header-info h2{font-size:18px;font-weight:800;color:var(--c-text)}
+.lesson-header-info p{font-size:13px;color:var(--c-text2);font-weight:500;margin-top:2px}
+.lessons-list{padding:16px 20px;display:flex;flex-direction:column;gap:12px}
+.lesson-item{
+  background:var(--c-surface);border-radius:var(--radius-lg);
+  border:1.5px solid var(--c-border);padding:16px 18px;
+  display:flex;align-items:center;gap:14px;cursor:pointer;
+  transition:transform var(--transition),box-shadow var(--transition);
+  box-shadow:var(--shadow-sm);
+}
+.lesson-item:active{transform:scale(0.98)}
+.lesson-item.completed{border-color:rgba(0,201,167,0.3)}
+.lesson-num{
+  width:40px;height:40px;border-radius:12px;background:var(--c-primary-l);
+  color:var(--c-primary);font-size:15px;font-weight:800;
+  display:flex;align-items:center;justify-content:center;flex-shrink:0;
+}
+.lesson-item.completed .lesson-num{background:#E8FDF8;color:#00C9A7}
+.lesson-info{flex:1}
+.lesson-info h3{font-size:15px;font-weight:700;color:var(--c-text)}
+.lesson-info p{font-size:12px;color:var(--c-text2);font-weight:500;margin-top:2px}
+.lesson-badge{
+  font-size:11px;font-weight:700;padding:4px 10px;border-radius:99px;
+  background:var(--c-surface2);color:var(--c-text3);
+}
+.lesson-item.completed .lesson-badge{background:#E8FDF8;color:#00A88A}
+/* ── 8. LESSON CONTENT SCREEN ───────────────────────────────── */
+#screen-lesson-content{background:var(--c-bg)}
+.content-header{
+  background:var(--c-surface);padding:52px 20px 20px;
+  border-bottom:1px solid var(--c-border);
+}
+.content-header-top{display:flex;align-items:center;gap:12px;margin-bottom:16px}
+.content-title{font-size:20px;font-weight:800;color:var(--c-text)}
+.content-subtitle{font-size:13px;color:var(--c-text2);font-weight:500;margin-top:3px}
+.lesson-progress-bar{height:6px;border-radius:99px;background:var(--c-surface2)}
+.lesson-progress-fill{height:100%;border-radius:99px;background:linear-gradient(90deg,var(--c-primary),var(--c-secondary));transition:width 0.6s ease}
+.content-body{padding:20px}
+/* Content cards */
+.content-card{
+  background:var(--c-surface);border-radius:var(--radius-lg);
+  border:1.5px solid var(--c-border);padding:20px;
+  margin-bottom:16px;box-shadow:var(--shadow-sm);
+}
+.content-card h3{font-size:16px;font-weight:800;color:var(--c-text);margin-bottom:12px;display:flex;align-items:center;gap:8px}
+.content-card p{font-size:14px;color:var(--c-text2);line-height:1.7;font-weight:500}
+.highlight-box{
+  background:var(--c-primary-l);border-radius:var(--radius-md);
+  padding:14px 16px;margin:12px 0;border-left:4px solid var(--c-primary);
+}
+.highlight-box p{color:var(--c-primary);font-weight:700;font-size:15px}
+.example-list{list-style:none;display:flex;flex-direction:column;gap:10px;margin-top:12px}
+.example-list li{
+  background:var(--c-surface2);border-radius:var(--radius-md);padding:12px 14px;
+  font-size:13px;color:var(--c-text);font-weight:600;
+  border:1px solid var(--c-border);
+  display:flex;align-items:flex-start;gap:10px;
+}
+.example-list li::before{content:'✦';color:var(--c-primary);font-size:10px;margin-top:3px;flex-shrink:0}
+.vocab-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:12px}
+.vocab-item{
+  background:var(--c-surface2);border-radius:var(--radius-md);
+  padding:12px;border:1px solid var(--c-border);text-align:center;
+}
+.vocab-word{font-size:16px;font-weight:800;color:var(--c-primary)}
+.vocab-def{font-size:11px;color:var(--c-text2);font-weight:600;margin-top:4px}
+.letter-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:8px;margin-top:12px}
+.letter-cell{
+  aspect-ratio:1;border-radius:12px;background:var(--c-primary-l);
+  display:flex;align-items:center;justify-content:center;
+  font-size:20px;font-weight:800;color:var(--c-primary);
+  border:1.5px solid rgba(26,111,232,0.15);
+}
+/* Audio waveform sim */
+.audio-player{
+  background:linear-gradient(135deg,var(--c-primary),var(--c-secondary));
+  border-radius:var(--radius-lg);padding:16px 18px;
+  display:flex;align-items:center;gap:14px;margin-top:12px;cursor:pointer;
+}
+.play-btn{
+  width:44px;height:44px;border-radius:50%;background:rgba(255,255,255,0.2);
+  display:flex;align-items:center;justify-content:center;font-size:20px;color:#fff;
+  flex-shrink:0;border:2px solid rgba(255,255,255,0.3);
+}
+.waveform{display:flex;gap:3px;align-items:center;flex:1}
+.wave-bar{
+  width:3px;border-radius:2px;background:rgba(255,255,255,0.5);
+  animation:waveAnim 1.2s ease-in-out infinite;
+}
+@keyframes waveAnim{0%,100%{height:8px}50%{height:24px}}
+.audio-label{font-size:13px;font-weight:600;color:rgba(255,255,255,0.9)}
+/* Navigation buttons */
+.lesson-nav-btns{display:flex;gap:12px;margin-top:20px}
+.btn-outline{
+  flex:1;height:50px;border-radius:var(--radius-lg);
+  background:var(--c-surface);color:var(--c-text);
+  font-size:14px;font-weight:700;border:1.5px solid var(--c-border);
+  transition:transform var(--transition);
+}
+.btn-outline:active{transform:scale(0.97)}
+.btn-fill{
+  flex:2;height:50px;border-radius:var(--radius-lg);
+  background:linear-gradient(135deg,var(--c-primary),var(--c-secondary));
+  color:#fff;font-size:14px;font-weight:700;
+  box-shadow:var(--shadow-md);
+  transition:transform var(--transition);
+}
+.btn-fill:active{transform:scale(0.97)}
+/* ── 9. QUIZ SCREEN ─────────────────────────────────────────── */
+#screen-quiz{background:var(--c-bg)}
+.quiz-header{
+  background:var(--c-surface);padding:52px 20px 20px;
+  border-bottom:1px solid var(--c-border);
+}
+.quiz-header-top{display:flex;align-items:center;gap:12px;margin-bottom:16px}
+.quiz-info h2{font-size:18px;font-weight:800;color:var(--c-text)}
+.quiz-info p{font-size:13px;color:var(--c-text2);font-weight:500;margin-top:2px}
+.quiz-progress-row{display:flex;align-items:center;gap:12px}
+.quiz-q-count{font-size:12px;font-weight:700;color:var(--c-text2);white-space:nowrap}
+.quiz-body{padding:20px;display:flex;flex-direction:column;gap:16px}
+.question-card{
+  background:var(--c-surface);border-radius:var(--radius-lg);
+  padding:22px 20px;border:1.5px solid var(--c-border);box-shadow:var(--shadow-sm);
+}
+.q-num{font-size:12px;font-weight:700;color:var(--c-primary);letter-spacing:0.4px;margin-bottom:8px}
+.q-text{font-size:17px;font-weight:700;color:var(--c-text);line-height:1.4}
+.q-hint{font-size:13px;color:var(--c-text2);margin-top:6px;font-weight:500}
+.options-list{display:flex;flex-direction:column;gap:10px}
+.option-btn{
+  width:100%;padding:15px 18px;border-radius:var(--radius-md);
+  background:var(--c-surface);border:1.5px solid var(--c-border);
+  text-align:left;font-size:14px;font-weight:600;color:var(--c-text);
+  transition:all var(--transition);display:flex;align-items:center;gap:12px;
+  box-shadow:var(--shadow-sm);
+}
+.option-btn:active{transform:scale(0.98)}
+.option-btn.selected{
+  border-color:var(--c-primary);background:var(--c-primary-l);color:var(--c-primary);
+}
+.option-btn.correct{
+  border-color:#00C9A7;background:#E8FDF8;color:#007A65;
+}
+.option-btn.wrong{
+  border-color:var(--c-danger);background:#FFECEC;color:#B83232;
+}
+.option-letter{
+  width:30px;height:30px;border-radius:8px;background:var(--c-surface2);
+  display:flex;align-items:center;justify-content:center;
+  font-size:13px;font-weight:800;color:var(--c-text2);flex-shrink:0;
+  transition:all var(--transition);
+}
+.option-btn.selected .option-letter{background:var(--c-primary);color:#fff}
+.option-btn.correct .option-letter{background:#00C9A7;color:#fff}
+.option-btn.wrong .option-letter{background:var(--c-danger);color:#fff}
+.quiz-feedback{
+  border-radius:var(--radius-md);padding:14px 16px;
+  font-size:14px;font-weight:700;display:none;align-items:center;gap:10px;
+}
+.quiz-feedback.correct-fb{background:#E8FDF8;color:#007A65;display:flex}
+.quiz-feedback.wrong-fb{background:#FFECEC;color:#B83232;display:flex}
+.quiz-actions{padding:0 20px 32px}
+/* Quiz results */
+.quiz-result{
+  display:flex;flex-direction:column;align-items:center;
+  padding:40px 28px;text-align:center;gap:16px;
+}
+.result-circle{
+  width:120px;height:120px;border-radius:50%;
+  background:linear-gradient(135deg,var(--c-primary),var(--c-secondary));
+  display:flex;align-items:center;justify-content:center;
+  box-shadow:var(--shadow-lg);position:relative;
+}
+.result-circle::after{
+  content:'';position:absolute;inset:-8px;border-radius:50%;
+  border:3px dashed rgba(26,111,232,0.2);animation:spin 10s linear infinite;
+}
+@keyframes spin{to{transform:rotate(360deg)}}
+.result-score{font-size:36px;font-weight:900;color:#fff}
+.result-title{font-size:22px;font-weight:800;color:var(--c-text)}
+.result-msg{font-size:14px;color:var(--c-text2);font-weight:500;line-height:1.6}
+.result-badges{display:flex;gap:10px;justify-content:center;flex-wrap:wrap}
+.result-badge{
+  padding:8px 16px;border-radius:99px;font-size:13px;font-weight:700;
+  background:var(--c-primary-l);color:var(--c-primary);
+}
+/* ── 10. PROGRESS SCREEN ────────────────────────────────────── */
+#screen-progress{background:var(--c-bg)}
+.progress-screen-header{
+  background:linear-gradient(145deg,var(--c-secondary),var(--c-primary));
+  padding:52px 24px 28px;border-radius:0 0 32px 32px;
+}
+.progress-screen-header h2{font-size:22px;font-weight:800;color:#fff;margin-top:12px}
+.progress-screen-header p{font-size:13px;color:rgba(255,255,255,0.75);margin-top:4px;font-weight:500}
+.big-circle{
+  width:110px;height:110px;border-radius:50%;
+  background:rgba(255,255,255,0.15);
+  border:3px solid rgba(255,255,255,0.3);
+  display:flex;align-items:center;justify-content:center;
+  backdrop-filter:blur(8px);
+}
+.big-pct{font-size:30px;font-weight:900;color:#fff;text-align:center;line-height:1}
+.big-pct span{font-size:13px;font-weight:600;color:rgba(255,255,255,0.7);display:block;margin-top:2px}
+.stats-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;padding:20px}
+.stat-card{
+  background:var(--c-surface);border-radius:var(--radius-lg);
+  padding:18px;border:1.5px solid var(--c-border);box-shadow:var(--shadow-sm);
+  text-align:center;
+}
+.stat-card .s-icon{font-size:28px;margin-bottom:8px;display:block}
+.stat-card .s-val{font-size:26px;font-weight:900;color:var(--c-text)}
+.stat-card .s-lbl{font-size:12px;color:var(--c-text2);font-weight:600;margin-top:4px}
+.cat-progress-list{padding:0 20px 20px;display:flex;flex-direction:column;gap:12px}
+.cat-prog-item{
+  background:var(--c-surface);border-radius:var(--radius-lg);
+  padding:16px 18px;border:1.5px solid var(--c-border);box-shadow:var(--shadow-sm);
+}
+.cat-prog-top{display:flex;align-items:center;gap:12px;margin-bottom:10px}
+.cat-prog-icon{
+  width:38px;height:38px;border-radius:12px;
+  display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0;
+}
+.cat-prog-info{flex:1}
+.cat-prog-info h4{font-size:14px;font-weight:800;color:var(--c-text)}
+.cat-prog-info p{font-size:12px;color:var(--c-text2);font-weight:600}
+.cat-prog-pct{font-size:14px;font-weight:800;color:var(--c-primary)}
+.mini-bar{height:6px;border-radius:99px;background:var(--c-surface2)}
+.mini-bar-fill{height:100%;border-radius:99px;transition:width 0.8s ease}
+/* ── 11. PROFILE SCREEN ─────────────────────────────────────── */
+#screen-profile{background:var(--c-bg)}
+.profile-header{
+  background:linear-gradient(145deg,#6C3EE8,#1A6FE8);
+  padding:52px 24px 40px;border-radius:0 0 40px 40px;
+  text-align:center;position:relative;overflow:hidden;
+}
+.profile-bg-deco{
+  position:absolute;inset:0;pointer-events:none;
+}
+.profile-bg-deco div{
+  position:absolute;border-radius:50%;background:rgba(255,255,255,0.06);
+}
+.profile-avatar{
+  width:88px;height:88px;border-radius:50%;
+  background:rgba(255,255,255,0.2);border:3px solid rgba(255,255,255,0.4);
+  display:flex;align-items:center;justify-content:center;
+  font-size:38px;font-weight:800;color:#fff;
+  margin:0 auto 14px;position:relative;z-index:1;
+}
+.profile-name{font-size:22px;font-weight:800;color:#fff;position:relative;z-index:1}
+.profile-email{font-size:13px;color:rgba(255,255,255,0.7);font-weight:500;margin-top:4px;position:relative;z-index:1}
+.profile-level{
+  display:inline-flex;align-items:center;gap:6px;
+  background:rgba(255,255,255,0.15);border-radius:99px;
+  padding:6px 16px;margin-top:12px;border:1px solid rgba(255,255,255,0.25);
+  position:relative;z-index:1;
+}
+.profile-level span{font-size:13px;font-weight:700;color:#fff}
+.profile-body{padding:20px}
+.settings-group{margin-bottom:20px}
+.settings-group-title{font-size:13px;font-weight:700;color:var(--c-text3);letter-spacing:0.5px;text-transform:uppercase;margin-bottom:10px;padding:0 2px}
+.settings-list{
+  background:var(--c-surface);border-radius:var(--radius-lg);
+  border:1.5px solid var(--c-border);overflow:hidden;box-shadow:var(--shadow-sm);
+}
+.settings-item{
+  display:flex;align-items:center;gap:14px;padding:16px 18px;
+  border-bottom:1px solid var(--c-border);cursor:pointer;
+  transition:background var(--transition);
+}
+.settings-item:last-child{border-bottom:none}
+.settings-item:active{background:var(--c-surface2)}
+.settings-icon{
+  width:36px;height:36px;border-radius:10px;
+  display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0;
+}
+.settings-text{flex:1}
+.settings-text h4{font-size:14px;font-weight:700;color:var(--c-text)}
+.settings-text p{font-size:12px;color:var(--c-text2);font-weight:500;margin-top:2px}
+.settings-arrow{font-size:18px;color:var(--c-text3)}
+/* Toggle switch */
+.toggle-switch{
+  width:46px;height:26px;border-radius:99px;
+  background:var(--c-surface2);border:1.5px solid var(--c-border);
+  position:relative;cursor:pointer;flex-shrink:0;
+  transition:background var(--transition),border-color var(--transition);
+}
+.toggle-switch.on{background:var(--c-primary);border-color:var(--c-primary)}
+.toggle-knob{
+  width:18px;height:18px;border-radius:50%;background:#fff;
+  position:absolute;top:50%;transform:translateY(-50%) translateX(3px);
+  box-shadow:0 1px 4px rgba(0,0,0,0.2);
+  transition:transform var(--transition);
+}
+.toggle-switch.on .toggle-knob{transform:translateY(-50%) translateX(23px)}
+/* Logout btn */
+.btn-danger{
+  width:100%;height:52px;border-radius:var(--radius-lg);
+  background:var(--c-surface);color:var(--c-danger);
+  font-size:15px;font-weight:700;border:1.5px solid rgba(232,70,70,0.25);
+  transition:all var(--transition);display:flex;align-items:center;justify-content:center;gap:8px;
+}
+.btn-danger:active{background:#FFECEC}
+/* ── 12. CERTIFICATE ────────────────────────────────────────── */
+#screen-certificate{background:var(--c-bg)}
+.cert-wrapper{padding:20px;display:flex;flex-direction:column;gap:16px}
+.certificate{
+  background:var(--c-surface);border-radius:24px;
+  border:2px solid var(--c-gold);overflow:hidden;
+  box-shadow:0 8px 32px rgba(247,183,49,0.2);
+}
+.cert-header-bar{
+  background:linear-gradient(135deg,var(--c-primary-d),var(--c-primary),var(--c-secondary));
+  padding:28px 24px;text-align:center;position:relative;overflow:hidden;
+}
+.cert-header-bar::before,.cert-header-bar::after{
+  content:'';position:absolute;border-radius:50%;
+  background:rgba(255,255,255,0.07);
+}
+.cert-header-bar::before{width:120px;height:120px;right:-20px;top:-30px}
+.cert-header-bar::after{width:80px;height:80px;left:-10px;bottom:-20px}
+.cert-header-bar h3{font-size:12px;letter-spacing:2px;color:rgba(255,255,255,0.7);font-weight:700;text-transform:uppercase}
+.cert-header-bar h1{font-size:26px;font-weight:900;color:#fff;margin:6px 0 2px;letter-spacing:-0.5px}
+.cert-header-bar p{font-size:13px;color:rgba(255,255,255,0.75);font-weight:500}
+.cert-medal{
+  width:64px;height:64px;border-radius:50%;
+  background:rgba(255,255,255,0.15);border:2px solid rgba(255,255,255,0.3);
+  display:flex;align-items:center;justify-content:center;
+  font-size:34px;margin:16px auto 0;position:relative;z-index:1;
+}
+.cert-body{padding:24px;text-align:center}
+.cert-body h2{font-size:14px;color:var(--c-text2);font-weight:600;letter-spacing:0.5px;margin-bottom:8px}
+.cert-name{font-size:28px;font-weight:900;color:var(--c-primary);font-style:italic;margin-bottom:8px}
+.cert-text{font-size:13px;color:var(--c-text2);line-height:1.7;font-weight:500}
+.cert-seal{
+  margin:20px auto;width:80px;height:80px;border-radius:50%;
+  background:linear-gradient(135deg,var(--c-gold),#F4A009);
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  box-shadow:0 4px 16px rgba(247,183,49,0.4);
+}
+.cert-seal span:first-child{font-size:24px}
+.cert-seal span:last-child{font-size:10px;font-weight:800;color:rgba(255,255,255,0.85);letter-spacing:0.5px}
+.cert-footer{
+  border-top:1.5px dashed rgba(247,183,49,0.4);padding:16px 24px;
+  display:flex;justify-content:space-between;align-items:center;
+}
+.cert-footer-item{text-align:center}
+.cert-footer-item h4{font-size:11px;color:var(--c-text3);font-weight:600}
+.cert-footer-item p{font-size:13px;font-weight:800;color:var(--c-text);margin-top:2px}
+/* ── 13. TOAST NOTIFICATIONS ────────────────────────────────── */
+.toast{
+  position:fixed;bottom:100px;left:50%;transform:translateX(-50%) translateY(20px);
+  background:var(--c-text);color:var(--c-bg);border-radius:99px;
+  padding:12px 24px;font-size:14px;font-weight:600;
+  z-index:9999;opacity:0;pointer-events:none;
+  transition:all 0.3s ease;white-space:nowrap;
+  box-shadow:var(--shadow-lg);max-width:90vw;
+}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+/* ── 14. LOADING OVERLAY ────────────────────────────────────── */
+.loading-overlay{
+  position:absolute;inset:0;background:var(--c-bg);
+  display:flex;align-items:center;justify-content:center;
+  z-index:9998;opacity:0;pointer-events:none;transition:opacity 0.3s ease;
+}
+.loading-overlay.show{opacity:1;pointer-events:all}
+.spinner{
+  width:44px;height:44px;border-radius:50%;
+  border:4px solid var(--c-border);border-top-color:var(--c-primary);
+  animation:spin 0.8s linear infinite;
+}
+/* ── 15. SEARCH RESULTS ─────────────────────────────────────── */
+.search-results{
+  position:absolute;top:68px;left:20px;right:20px;
+  background:var(--c-surface);border-radius:var(--radius-lg);
+  border:1.5px solid var(--c-border);box-shadow:var(--shadow-md);
+  z-index:200;overflow:hidden;display:none;max-height:280px;overflow-y:auto;
+}
+.search-results.open{display:block}
+.search-result-item{
+  padding:14px 18px;border-bottom:1px solid var(--c-border);
+  cursor:pointer;display:flex;align-items:center;gap:12px;
+  transition:background var(--transition);
+}
+.search-result-item:last-child{border-bottom:none}
+.search-result-item:active{background:var(--c-surface2)}
+.sr-icon{font-size:20px;width:32px;text-align:center}
+.sr-info h4{font-size:14px;font-weight:700;color:var(--c-text)}
+.sr-info p{font-size:12px;color:var(--c-text2);font-weight:500;margin-top:2px}
+/* ── 16. FONTS ──────────────────────────────────────────────── */
+@import url('https://fonts.googleapis.com/css2?family=Nunito:wght@500;600;700;800;900&display=swap');
+/* Scrollbar */
+::-webkit-scrollbar{width:4px}
+::-webkit-scrollbar-track{background:transparent}
+::-webkit-scrollbar-thumb{background:var(--c-border);border-radius:4px}
+/* ── 17. ANIMATIONS ─────────────────────────────────────────── */
+@keyframes cardIn{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:translateY(0)}}
+.anim-in{animation:cardIn 0.4s ease both}
+.anim-delay-1{animation-delay:0.05s}
+.anim-delay-2{animation-delay:0.1s}
+.anim-delay-3{animation-delay:0.15s}
+.anim-delay-4{animation-delay:0.2s}
+.anim-delay-5{animation-delay:0.25s}
+.anim-delay-6{animation-delay:0.3s}
+.anim-delay-7{animation-delay:0.35s}
+/* Correct/Wrong feedback animation */
+@keyframes popIn{0%{transform:scale(0.8)}70%{transform:scale(1.05)}100%{transform:scale(1)}}
+.pop-in{animation:popIn 0.35s ease}
+</style>
+</head>
+<body>
+
+<div id="app">
+
+  <!-- ═══════════════════════════════════════════════════════
+       SCREEN 1: SPLASH
+  ═══════════════════════════════════════════════════════ -->
+  <div id="screen-splash" class="screen active">
+    <div class="splash-bg">
+      <div class="splash-circle"></div>
+      <div class="splash-circle"></div>
+      <div class="splash-circle"></div>
+    </div>
+    <div class="splash-logo">
+      <!-- LinguaFlow logo mark -->
+      <svg viewBox="0 0 52 52" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <rect x="4" y="4" width="44" height="44" rx="14" fill="rgba(255,255,255,0.25)"/>
+        <path d="M14 22C14 18.686 16.686 16 20 16H32C35.314 16 38 18.686 38 22V26C38 29.314 35.314 32 32 32H28L24 36V32H20C16.686 32 14 29.314 14 26V22Z" fill="white"/>
+        <circle cx="21" cy="24" r="2" fill="#1A6FE8"/>
+        <circle cx="26" cy="24" r="2" fill="#1A6FE8"/>
+        <circle cx="31" cy="24" r="2" fill="#1A6FE8"/>
+      </svg>
+    </div>
+    <div class="splash-text">
+      <h1>LinguaFlow</h1>
+      <p>Master English — One Lesson at a Time</p>
+    </div>
+    <div class="splash-loader">
+      <div class="splash-dots">
+        <div class="splash-dot"></div>
+        <div class="splash-dot"></div>
+        <div class="splash-dot"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════════════════
+       SCREEN 2: LOGIN
+  ═══════════════════════════════════════════════════════ -->
+  <div id="screen-login" class="screen">
+    <div class="auth-hero">
+      <div class="auth-hero-deco"></div>
+      <div class="auth-hero-deco2"></div>
+      <div class="auth-logo-sm">
+        <svg viewBox="0 0 52 52" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <path d="M10 20C10 16.134 13.134 13 17 13H35C38.866 13 42 16.134 42 20V26C42 29.866 38.866 33 35 33H30L26 38V33H17C13.134 33 10 29.866 10 26V20Z" fill="white"/>
+          <circle cx="19" cy="23" r="2.5" fill="#1A6FE8"/>
+          <circle cx="26" cy="23" r="2.5" fill="#1A6FE8"/>
+          <circle cx="33" cy="23" r="2.5" fill="#1A6FE8"/>
+        </svg>
+      </div>
+      <h2>Welcome back! 👋</h2>
+      <p>Continue your English learning journey</p>
+    </div>
+    <div class="auth-body">
+      <div class="form-group">
+        <label class="form-label">Email Address</label>
+        <div class="input-wrap">
+          <span class="input-icon">✉️</span>
+          <input id="login-email" class="form-input" type="email" placeholder="your@email.com" autocomplete="email" />
+        </div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Password</label>
+        <div class="input-wrap">
+          <span class="input-icon">🔒</span>
+          <input id="login-password" class="form-input" type="password" placeholder="Enter your password" autocomplete="current-password" />
+        </div>
+      </div>
+      <div style="margin-bottom:24px">
+        <button class="btn-primary" id="btn-login">
+          Sign In ✦
+        </button>
+      </div>
+      <div class="auth-divider">
+        <span>or continue with</span>
+      </div>
+      <div style="margin-top:16px">
+        <button class="btn-secondary" id="btn-demo-login">
+          🚀 Try Demo Account
+        </button>
+      </div>
+      <div class="auth-switch">
+        Don't have an account? <a href="#" id="go-signup">Sign Up</a>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════════════════
+       SCREEN 3: SIGN UP
+  ═══════════════════════════════════════════════════════ -->
+  <div id="screen-signup" class="screen">
+    <div class="auth-hero">
+      <div class="auth-hero-deco"></div>
+      <div class="auth-hero-deco2"></div>
+      <div class="auth-logo-sm">
+        <svg viewBox="0 0 52 52" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <path d="M10 20C10 16.134 13.134 13 17 13H35C38.866 13 42 16.134 42 20V26C42 29.866 38.866 33 35 33H30L26 38V33H17C13.134 33 10 29.866 10 26V20Z" fill="white"/>
+          <circle cx="19" cy="23" r="2.5" fill="#1A6FE8"/>
+          <circle cx="26" cy="23" r="2.5" fill="#1A6FE8"/>
+          <circle cx="33" cy="23" r="2.5" fill="#1A6FE8"/>
+        </svg>
+      </div>
+      <h2>Create Account 🎓</h2>
+      <p>Start your English mastery today</p>
+    </div>
+    <div class="auth-body">
+      <div class="form-group">
+        <label class="form-label">Full Name</label>
+        <div class="input-wrap">
+          <span class="input-icon">👤</span>
+          <input id="signup-name" class="form-input" type="text" placeholder="Your full name" autocomplete="name" />
+        </div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Email Address</label>
+        <div class="input-wrap">
+          <span class="input-icon">✉️</span>
+          <input id="signup-email" class="form-input" type="email" placeholder="your@email.com" autocomplete="email" />
+        </div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Password</label>
+        <div class="input-wrap">
+          <span class="input-icon">🔒</span>
+          <input id="signup-password" class="form-input" type="password" placeholder="Create a password (min 6 chars)" autocomplete="new-password" />
+        </div>
+      </div>
+      <div style="margin-bottom:24px">
+        <button class="btn-primary" id="btn-signup">
+          Create Account ✦
+        </button>
+      </div>
+      <div class="auth-switch">
+        Already have an account? <a href="#" id="go-login">Sign In</a>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════════════════
+       SCREEN 4: DASHBOARD
+  ═══════════════════════════════════════════════════════ -->
+  <div id="screen-dashboard" class="screen">
+    <div class="page-content">
+      <!-- Header -->
+      <div class="dash-header">
+        <div class="dash-header-deco"></div>
+        <div class="dash-top-row">
+          <div>
+            <div class="dash-greeting" id="dash-greeting">Good Morning ☀️</div>
+            <div class="dash-name" id="dash-username">Loading...</div>
+          </div>
+          <div class="dash-avatar" id="dash-avatar" onclick="App.nav('profile')">A</div>
+        </div>
+        <div class="dash-stats-row">
+          <div class="dash-stat">
+            <div class="dash-stat-val" id="stat-lessons">0</div>
+            <div class="dash-stat-lbl">Lessons Done</div>
+          </div>
+          <div class="dash-stat">
+            <div class="dash-stat-val" id="stat-streak">0🔥</div>
+            <div class="dash-stat-lbl">Day Streak</div>
+          </div>
+          <div class="dash-stat">
+            <div class="dash-stat-val" id="stat-xp">0</div>
+            <div class="dash-stat-lbl">Total XP</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Search -->
+      <div class="search-bar" style="position:relative">
+        <span class="search-icon">🔍</span>
+        <input id="lesson-search" class="search-input" type="text" placeholder="Search lessons..." />
+        <div class="search-results" id="search-results"></div>
+      </div>
+
+      <!-- Streak Card -->
+      <div class="section-header">
+        <span class="section-title">Daily Streak</span>
+      </div>
+      <div class="streak-card" style="margin:0 20px">
+        <div class="streak-flame">🔥</div>
+        <div class="streak-info">
+          <h3>Keep it up!</h3>
+          <p id="streak-display">0 Days</p>
+          <span>Practice daily to grow your streak</span>
+        </div>
+      </div>
+
+      <!-- Overall Progress -->
+      <div class="section-header">
+        <span class="section-title">Overall Progress</span>
+        <span class="section-link" onclick="App.nav('progress')">View All →</span>
+      </div>
+      <div class="progress-card" style="margin:0 20px">
+        <div class="progress-header">
+          <span class="progress-title">Course Completion</span>
+          <span class="progress-pct" id="overall-pct">0%</span>
+        </div>
+        <div class="progress-bar-bg">
+          <div class="progress-bar-fill" id="overall-bar" style="width:0%"></div>
+        </div>
+        <div class="progress-steps" id="progress-steps"></div>
+      </div>
+
+      <!-- Categories -->
+      <div class="section-header">
+        <span class="section-title">Lesson Categories</span>
+      </div>
+      <div class="categories-grid" id="categories-grid">
+        <!-- Injected by JS -->
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════════════════
+       SCREEN 5: LESSON LIST (per category)
+  ═══════════════════════════════════════════════════════ -->
+  <div id="screen-lesson" class="screen">
+    <div class="lesson-header">
+      <button class="back-btn" onclick="App.nav('dashboard')">‹</button>
+      <div class="lesson-header-info">
+        <h2 id="lesson-cat-title">Category</h2>
+        <p id="lesson-cat-subtitle">Select a lesson to begin</p>
+      </div>
+    </div>
+    <div class="lessons-list" id="lessons-list">
+      <!-- Injected by JS -->
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════════════════
+       SCREEN 6: LESSON CONTENT
+  ═══════════════════════════════════════════════════════ -->
+  <div id="screen-lesson-content" class="screen">
+    <div class="content-header">
+      <div class="content-header-top">
+        <button class="back-btn" id="lesson-content-back">‹</button>
+        <div>
+          <div class="content-title" id="content-title">Lesson Title</div>
+          <div class="content-subtitle" id="content-subtitle">Subtitle</div>
+        </div>
+      </div>
+      <div class="lesson-progress-bar">
+        <div class="lesson-progress-fill" id="content-progress" style="width:0%"></div>
+      </div>
+    </div>
+    <div class="content-body" id="content-body">
+      <!-- Injected by JS -->
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════════════════
+       SCREEN 7: QUIZ
+  ═══════════════════════════════════════════════════════ -->
+  <div id="screen-quiz" class="screen">
+    <div class="quiz-header">
+      <div class="quiz-header-top">
+        <button class="back-btn" id="quiz-back-btn">‹</button>
+        <div class="quiz-info">
+          <h2 id="quiz-title">Quiz</h2>
+          <p id="quiz-subtitle">Test your knowledge</p>
+        </div>
+      </div>
+      <div class="quiz-progress-row">
+        <div style="flex:1" class="lesson-progress-bar">
+          <div class="lesson-progress-fill" id="quiz-progress-bar" style="width:0%"></div>
+        </div>
+        <span class="quiz-q-count" id="quiz-q-count">1 / 5</span>
+      </div>
+    </div>
+    <div class="quiz-body" id="quiz-body"><!-- Injected by JS --></div>
+    <div class="quiz-actions" id="quiz-actions"><!-- Injected by JS --></div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════════════════
+       SCREEN 8: PROGRESS
+  ═══════════════════════════════════════════════════════ -->
+  <div id="screen-progress" class="screen">
+    <div class="page-content">
+      <div class="progress-screen-header">
+        <div style="display:flex;align-items:center;gap:14px">
+          <button class="back-btn" style="background:rgba(255,255,255,0.2);color:#fff" onclick="App.nav('dashboard')">‹</button>
+          <div class="big-circle">
+            <div class="big-pct" id="big-pct-display">0%<span>Complete</span></div>
+          </div>
+        </div>
+        <h2>Your Progress</h2>
+        <p>Keep going — every lesson counts!</p>
+      </div>
+      <!-- Stats grid -->
+      <div class="stats-grid">
+        <div class="stat-card">
+          <span class="s-icon">📚</span>
+          <div class="s-val" id="prog-lessons">0</div>
+          <div class="s-lbl">Lessons Done</div>
+        </div>
+        <div class="stat-card">
+          <span class="s-icon">🏆</span>
+          <div class="s-val" id="prog-quizzes">0</div>
+          <div class="s-lbl">Quizzes Passed</div>
+        </div>
+        <div class="stat-card">
+          <span class="s-icon">⚡</span>
+          <div class="s-val" id="prog-xp">0</div>
+          <div class="s-lbl">Total XP</div>
+        </div>
+        <div class="stat-card">
+          <span class="s-icon">🔥</span>
+          <div class="s-val" id="prog-streak">0</div>
+          <div class="s-lbl">Day Streak</div>
+        </div>
+      </div>
+      <div class="section-header">
+        <span class="section-title">Categories</span>
+      </div>
+      <div class="cat-progress-list" id="cat-progress-list"><!-- Injected --></div>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════════════════
+       SCREEN 9: PROFILE
+  ═══════════════════════════════════════════════════════ -->
+  <div id="screen-profile" class="screen">
+    <div class="page-content">
+      <div class="profile-header">
+        <div class="profile-bg-deco">
+          <div style="width:200px;height:200px;top:-60px;right:-60px"></div>
+          <div style="width:120px;height:120px;bottom:-30px;left:20px"></div>
+        </div>
+        <div class="profile-avatar" id="profile-avatar">A</div>
+        <div class="profile-name" id="profile-name">User</div>
+        <div class="profile-email" id="profile-email">user@email.com</div>
+        <div class="profile-level">
+          <span id="profile-level-badge">🌱 Beginner</span>
+        </div>
+      </div>
+      <div class="profile-body">
+        <!-- Account settings -->
+        <div class="settings-group">
+          <div class="settings-group-title">Preferences</div>
+          <div class="settings-list">
+            <div class="settings-item" id="dark-mode-toggle">
+              <div class="settings-icon" style="background:#1A2744">🌙</div>
+              <div class="settings-text">
+                <h4>Dark Mode</h4>
+                <p>Switch between light and dark theme</p>
+              </div>
+              <div class="toggle-switch" id="dark-toggle-btn">
+                <div class="toggle-knob"></div>
+              </div>
+            </div>
+            <div class="settings-item" onclick="App.nav('progress')">
+              <div class="settings-icon" style="background:#E8F0FD">📊</div>
+              <div class="settings-text">
+                <h4>My Progress</h4>
+                <p>View detailed learning statistics</p>
+              </div>
+              <span class="settings-arrow">›</span>
+            </div>
+            <div class="settings-item" onclick="App.showCertificate()">
+              <div class="settings-icon" style="background:#FFF8E1">🏆</div>
+              <div class="settings-text">
+                <h4>My Certificate</h4>
+                <p>View your completion certificate</p>
+              </div>
+              <span class="settings-arrow">›</span>
+            </div>
+          </div>
+        </div>
+        <!-- Account info -->
+        <div class="settings-group">
+          <div class="settings-group-title">Account</div>
+          <div class="settings-list">
+            <div class="settings-item">
+              <div class="settings-icon" style="background:#E8F5E9">📧</div>
+              <div class="settings-text">
+                <h4>Email</h4>
+                <p id="profile-email-display">—</p>
+              </div>
+            </div>
+            <div class="settings-item">
+              <div class="settings-icon" style="background:#EDE7F6">⚡</div>
+              <div class="settings-text">
+                <h4>XP Points</h4>
+                <p id="profile-xp-display">0 XP earned</p>
+              </div>
+            </div>
+            <div class="settings-item">
+              <div class="settings-icon" style="background:#FCE4EC">🔥</div>
+              <div class="settings-text">
+                <h4>Day Streak</h4>
+                <p id="profile-streak-display">0 days</p>
+              </div>
+            </div>
+          </div>
+        </div>
+        <!-- Logout -->
+        <button class="btn-danger" id="btn-logout">
+          🚪 Sign Out
+        </button>
+        <div style="height:16px"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════════════════
+       SCREEN 10: CERTIFICATE
+  ═══════════════════════════════════════════════════════ -->
+  <div id="screen-certificate" class="screen">
+    <div style="padding:52px 20px 20px;display:flex;align-items:center;gap:12px;background:var(--c-surface);border-bottom:1px solid var(--c-border)">
+      <button class="back-btn" onclick="App.nav('profile')">‹</button>
+      <div>
+        <div style="font-size:18px;font-weight:800;color:var(--c-text)">Certificate</div>
+        <div style="font-size:13px;color:var(--c-text2);font-weight:500">Your achievement</div>
+      </div>
+    </div>
+    <div class="cert-wrapper">
+      <div class="certificate">
+        <div class="cert-header-bar">
+          <h3>LinguaFlow Academy</h3>
+          <div class="cert-medal">🏆</div>
+          <h1>Certificate of Completion</h1>
+          <p>English Language Mastery Program</p>
+        </div>
+        <div class="cert-body">
+          <h2>THIS CERTIFIES THAT</h2>
+          <div class="cert-name" id="cert-name">Student Name</div>
+          <p class="cert-text">
+            has successfully completed the <strong>LinguaFlow English Learning Program</strong>,
+            demonstrating proficiency across all seven core language skills including
+            Alphabet, Vocabulary, Grammar, Speaking, Listening, Reading, and Writing.
+          </p>
+          <div class="cert-seal">
+            <span>⭐</span>
+            <span>CERTIFIED</span>
+          </div>
+        </div>
+        <div class="cert-footer">
+          <div class="cert-footer-item">
+            <h4>Issued On</h4>
+            <p id="cert-date">—</p>
+          </div>
+          <div class="cert-footer-item">
+            <h4>XP Earned</h4>
+            <p id="cert-xp">0 XP</p>
+          </div>
+          <div class="cert-footer-item">
+            <h4>Level</h4>
+            <p>Intermediate</p>
+          </div>
+        </div>
+      </div>
+      <button class="btn-primary" onclick="App.toast('Certificate saved! 🎉')">
+        📥 Download Certificate
+      </button>
+      <button class="btn-secondary" onclick="App.toast('Shared to social! 🚀')">
+        🔗 Share Achievement
+      </button>
+    </div>
+  </div>
+
+  <!-- BOTTOM NAVIGATION -->
+  <nav id="bottom-nav">
+    <div class="nav-item active" id="nav-home" onclick="App.nav('dashboard')">
+      <div class="nav-icon">🏠</div>
+      <span>Home</span>
+    </div>
+    <div class="nav-item" id="nav-lessons" onclick="App.nav('lessons')">
+      <div class="nav-icon">📚</div>
+      <span>Lessons</span>
+    </div>
+    <div class="nav-item" id="nav-progress" onclick="App.nav('progress')">
+      <div class="nav-icon">📊</div>
+      <span>Progress</span>
+    </div>
+    <div class="nav-item" id="nav-profile" onclick="App.nav('profile')">
+      <div class="nav-icon">👤</div>
+      <span>Profile</span>
+    </div>
+  </nav>
+
+  <!-- Toast notification -->
+  <div class="toast" id="toast"></div>
+
+  <!-- Loading overlay -->
+  <div class="loading-overlay" id="loading-overlay">
+    <div class="spinner"></div>
+  </div>
+</div>
+
+<!-- ================================================================
+     JAVASCRIPT — Application Logic
+================================================================ -->
+<script>
+'use strict';
+
+/* ────────────────────────────────────────────────────────────────
+   DATA: Lesson Categories & Content
+──────────────────────────────────────────────────────────────── */
+const CATEGORIES = [
+  {
+    id:'alphabet', label:'Alphabet', icon:'🔤', cls:'cat-alphabet',
+    subtitle:'26 letters · Sounds · Phonics',
+    lessons:[
+      {id:'alp1', title:'Vowels & Consonants', desc:'5 vowels, 21 consonants', xp:50},
+      {id:'alp2', title:'Letter Sounds (A–M)', desc:'Pronunciation guide', xp:50},
+      {id:'alp3', title:'Letter Sounds (N–Z)', desc:'Complete the alphabet', xp:50},
+      {id:'alp4', title:'Uppercase & Lowercase', desc:'Both forms of every letter', xp:60},
+    ]
+  },
+  {
+    id:'vocabulary', label:'Vocabulary', icon:'📖', cls:'cat-vocabulary',
+    subtitle:'Words · Phrases · Context',
+    lessons:[
+      {id:'voc1', title:'Common Nouns', desc:'People, places, things', xp:60},
+      {id:'voc2', title:'Action Verbs', desc:'Move, speak, think & more', xp:60},
+      {id:'voc3', title:'Adjectives', desc:'Describing words', xp:60},
+      {id:'voc4', title:'Daily Phrases', desc:'Greetings & conversations', xp:70},
+      {id:'voc5', title:'Time & Numbers', desc:'Dates, clocks & counting', xp:70},
+    ]
+  },
+  {
+    id:'grammar', label:'Grammar', icon:'📝', cls:'cat-grammar',
+    subtitle:'Rules · Structure · Tenses',
+    lessons:[
+      {id:'grm1', title:'Nouns & Pronouns', desc:'I, you, they & more', xp:70},
+      {id:'grm2', title:'Present Tense', desc:'Describing now', xp:70},
+      {id:'grm3', title:'Past Tense', desc:'Talking about yesterday', xp:70},
+      {id:'grm4', title:'Future Tense', desc:'Plans and predictions', xp:70},
+      {id:'grm5', title:'Prepositions', desc:'In, on, under, between...', xp:80},
+    ]
+  },
+  {
+    id:'speaking', label:'Speaking', icon:'🎤', cls:'cat-speaking',
+    subtitle:'Fluency · Pronunciation · Tone',
+    lessons:[
+      {id:'spk1', title:'Basic Conversations', desc:'Hello, goodbye & more', xp:80},
+      {id:'spk2', title:'Asking Questions', desc:'Who, what, where, when...', xp:80},
+      {id:'spk3', title:'Expressing Opinions', desc:'I think, I believe...', xp:90},
+      {id:'spk4', title:'Storytelling', desc:'Narrate with confidence', xp:100},
+    ]
+  },
+  {
+    id:'listening', label:'Listening', icon:'🎧', cls:'cat-listening',
+    subtitle:'Comprehension · Accents · Speed',
+    lessons:[
+      {id:'lst1', title:'Short Dialogues', desc:'Everyday conversations', xp:80},
+      {id:'lst2', title:'News & Announcements', desc:'Formal speech patterns', xp:80},
+      {id:'lst3', title:'Accents & Dialects', desc:'US, UK, Australian', xp:90},
+      {id:'lst4', title:'Songs & Lyrics', desc:'Learn through music', xp:90},
+    ]
+  },
+  {
+    id:'reading', label:'Reading', icon:'📰', cls:'cat-reading',
+    subtitle:'Comprehension · Speed · Analysis',
+    lessons:[
+      {id:'rdn1', title:'Short Stories', desc:'Beginner-level fiction', xp:80},
+      {id:'rdn2', title:'News Articles', desc:'Current events in English', xp:80},
+      {id:'rdn3', title:'Idioms & Expressions', desc:'Figurative language', xp:90},
+      {id:'rdn4', title:'Advanced Texts', desc:'Literature excerpts', xp:100},
+    ]
+  },
+  {
+    id:'writing', label:'Writing', icon:'✏️', cls:'cat-writing',
+    subtitle:'Sentences · Essays · Emails',
+    lessons:[
+      {id:'wrt1', title:'Sentence Structure', desc:'Subject, verb, object', xp:80},
+      {id:'wrt2', title:'Paragraphs', desc:'Topic sentences & support', xp:80},
+      {id:'wrt3', title:'Emails & Letters', desc:'Formal & informal writing', xp:90},
+      {id:'wrt4', title:'Essay Writing', desc:'Argumentative & narrative', xp:100},
+    ]
+  }
+];
+
+/* Lesson content templates */
+const LESSON_CONTENT = {
+  alp1:{
+    title:'Vowels & Consonants',
+    body:`
+      <div class="content-card anim-in">
+        <h3>📌 What are Vowels?</h3>
+        <p>Vowels are the backbone of English pronunciation. There are <strong>5 vowel letters</strong> in English.</p>
+        <div class="highlight-box"><p>A · E · I · O · U</p></div>
+        <div class="letter-grid">
+          ${['A','E','I','O','U'].map(l=>`<div class="letter-cell">${l}</div>`).join('')}
+        </div>
+      </div>
+      <div class="content-card anim-in anim-delay-1">
+        <h3>📌 Consonants</h3>
+        <p>All 21 remaining letters are consonants. They need a vowel to form a complete syllable.</p>
+        <div class="letter-grid">
+          ${['B','C','D','F','G','H','J','K','L','M','N','P','Q','R','S','T','V','W','X','Y','Z'].map(l=>`<div class="letter-cell" style="font-size:16px">${l}</div>`).join('')}
+        </div>
+      </div>
+      <div class="content-card anim-in anim-delay-2">
+        <h3>💡 Examples</h3>
+        <ul class="example-list">
+          <li>The word <strong>APPLE</strong> starts with vowel 'A'</li>
+          <li><strong>BRIDGE</strong> starts with consonant 'B'</li>
+          <li>Every syllable needs at least one vowel</li>
+        </ul>
+      </div>
+    `
+  },
+  voc1:{
+    title:'Common Nouns',
+    body:`
+      <div class="content-card anim-in">
+        <h3>📌 What is a Noun?</h3>
+        <p>A noun is a word that names a person, place, animal, thing, or idea. They are the most common word type in English.</p>
+        <div class="highlight-box"><p>People • Places • Things • Ideas</p></div>
+      </div>
+      <div class="content-card anim-in anim-delay-1">
+        <h3>📖 Key Vocabulary</h3>
+        <div class="vocab-grid">
+          ${[['House','A dwelling'],['Car','A vehicle'],['Book','Reading material'],['Tree','A plant'],['Water','H₂O liquid'],['Friend','A companion']].map(([w,d])=>`<div class="vocab-item"><div class="vocab-word">${w}</div><div class="vocab-def">${d}</div></div>`).join('')}
+        </div>
+      </div>
+      <div class="content-card anim-in anim-delay-2">
+        <h3>💡 Noun Examples</h3>
+        <ul class="example-list">
+          <li>The <strong>dog</strong> runs in the park (animal noun)</li>
+          <li>London is a famous <strong>city</strong> (place noun)</li>
+          <li><strong>Happiness</strong> is important (abstract noun)</li>
+        </ul>
+      </div>
+    `
+  },
+  grm2:{
+    title:'Present Tense',
+    body:`
+      <div class="content-card anim-in">
+        <h3>📌 Present Simple</h3>
+        <p>The present simple tense describes habits, facts, and current states. It is the most commonly used tense.</p>
+        <div class="highlight-box"><p>Subject + Verb (+ s/es for he/she/it)</p></div>
+      </div>
+      <div class="content-card anim-in anim-delay-1">
+        <h3>📖 Conjugation</h3>
+        <div class="vocab-grid">
+          ${[['I eat','1st person'],['You eat','2nd person'],['He eats','3rd sing.'],['We eat','1st plural'],['They eat','3rd plural'],['She eats','3rd sing.']].map(([w,d])=>`<div class="vocab-item"><div class="vocab-word" style="font-size:13px">${w}</div><div class="vocab-def">${d}</div></div>`).join('')}
+        </div>
+      </div>
+      <div class="content-card anim-in anim-delay-2">
+        <h3>💡 Usage Examples</h3>
+        <ul class="example-list">
+          <li>I <strong>work</strong> every day (habit)</li>
+          <li>The sun <strong>rises</strong> in the east (fact)</li>
+          <li>She <strong>speaks</strong> three languages (ability)</li>
+          <li>They <strong>live</strong> in New York (current state)</li>
+        </ul>
+      </div>
+    `
+  },
+  spk1:{
+    title:'Basic Conversations',
+    body:`
+      <div class="content-card anim-in">
+        <h3>🎤 Greetings</h3>
+        <p>First impressions matter! Learn how to greet people in English naturally.</p>
+        <ul class="example-list">
+          <li>"Hello! / Hi!" — casual greeting</li>
+          <li>"Good morning / afternoon / evening" — formal</li>
+          <li>"How are you?" — asking about wellbeing</li>
+          <li>"Nice to meet you." — first introductions</li>
+        </ul>
+      </div>
+      <div class="content-card anim-in anim-delay-1">
+        <h3>🎤 Listen & Repeat</h3>
+        <div class="audio-player" onclick="App.playAudio(this)">
+          <div class="play-btn" id="play-icon">▶</div>
+          <div class="waveform">
+            ${Array(18).fill(0).map((_,i)=>`<div class="wave-bar" style="animation-delay:${i*0.07}s;height:${6+Math.random()*18}px"></div>`).join('')}
+          </div>
+          <div class="audio-label">Play pronunciation</div>
+        </div>
+      </div>
+      <div class="content-card anim-in anim-delay-2">
+        <h3>💡 Full Dialogue</h3>
+        <ul class="example-list">
+          <li>A: "Hi! My name is Emma. What's yours?"</li>
+          <li>B: "I'm Carlos. Nice to meet you, Emma!"</li>
+          <li>A: "You too! Where are you from?"</li>
+          <li>B: "I'm from Mexico. And you?"</li>
+        </ul>
+      </div>
+    `
+  },
+  lst1:{
+    title:'Short Dialogues',
+    body:`
+      <div class="content-card anim-in">
+        <h3>🎧 Listening Tips</h3>
+        <p>Effective listening requires active attention. Follow these strategies to improve comprehension.</p>
+        <ul class="example-list">
+          <li>Focus on key words (nouns & verbs)</li>
+          <li>Listen for stressed syllables</li>
+          <li>Use context to guess unknown words</li>
+        </ul>
+      </div>
+      <div class="content-card anim-in anim-delay-1">
+        <h3>🎧 Dialogue 1 — At the Café</h3>
+        <div class="audio-player" onclick="App.playAudio(this)">
+          <div class="play-btn">▶</div>
+          <div class="waveform">
+            ${Array(18).fill(0).map((_,i)=>`<div class="wave-bar" style="animation-delay:${i*0.08}s;height:${8+Math.random()*16}px"></div>`).join('')}
+          </div>
+          <div class="audio-label">At the Café</div>
+        </div>
+        <ul class="example-list" style="margin-top:12px">
+          <li>Waiter: "What can I get you?"</li>
+          <li>Customer: "I'd like a coffee, please."</li>
+          <li>Waiter: "Large or small?"</li>
+          <li>Customer: "Large, thank you."</li>
+        </ul>
+      </div>
+    `
+  },
+  rdn1:{
+    title:'Short Stories',
+    body:`
+      <div class="content-card anim-in">
+        <h3>📰 The Little Star</h3>
+        <p>Read the following short story carefully. Pay attention to the vocabulary and sentence structure.</p>
+      </div>
+      <div class="content-card anim-in anim-delay-1" style="background:linear-gradient(135deg,var(--c-primary-l),var(--c-surface))">
+        <h3>📖 Story</h3>
+        <p style="line-height:1.9;font-size:15px;color:var(--c-text)">
+          Once upon a time, there was a little star who lived in the sky. Every night, she would <strong>shine</strong> her light over the world below. Children would look up and <strong>make wishes</strong>.<br><br>
+          One stormy night, dark clouds covered the sky. The little star could not be seen. The children were <strong>sad</strong>. But the star did not give up. She <strong>pushed through</strong> the clouds and shone even brighter.<br><br>
+          The children cheered. "The star is back!" they shouted <strong>joyfully</strong>. And from that day on, the little star always found a way to shine.
+        </p>
+      </div>
+      <div class="content-card anim-in anim-delay-2">
+        <h3>💡 Vocabulary Check</h3>
+        <div class="vocab-grid">
+          ${[['shine','emit light'],['wishes','desires'],['stormy','with storm'],['joyfully','with joy']].map(([w,d])=>`<div class="vocab-item"><div class="vocab-word">${w}</div><div class="vocab-def">${d}</div></div>`).join('')}
+        </div>
+      </div>
+    `
+  },
+  wrt1:{
+    title:'Sentence Structure',
+    body:`
+      <div class="content-card anim-in">
+        <h3>✏️ The Basic Sentence</h3>
+        <p>Every English sentence needs at minimum a <strong>subject</strong> and a <strong>verb</strong>. Most sentences follow the SVO pattern.</p>
+        <div class="highlight-box"><p>Subject → Verb → Object</p></div>
+      </div>
+      <div class="content-card anim-in anim-delay-1">
+        <h3>✏️ Building Sentences</h3>
+        <div class="vocab-grid">
+          ${[['Subject','Who/What does it'],['Verb','The action'],['Object','Receives action'],['Adjective','Describes noun'],['Adverb','Describes verb'],['Comma','Pause mark']].map(([w,d])=>`<div class="vocab-item"><div class="vocab-word" style="font-size:12px">${w}</div><div class="vocab-def">${d}</div></div>`).join('')}
+        </div>
+      </div>
+      <div class="content-card anim-in anim-delay-2">
+        <h3>💡 Examples</h3>
+        <ul class="example-list">
+          <li><strong>She</strong> reads <strong>books</strong>. (S + V + O)</li>
+          <li>The <strong>tall</strong> man runs <strong>quickly</strong>. (S+Adj + V + Adv)</li>
+          <li>I love learning <strong>English</strong>! (S + V + gerund phrase)</li>
+        </ul>
+      </div>
+    `
+  }
+};
+
+/* Default content for lessons without specific content */
+function defaultContent(cat, lesson) {
+  return `
+    <div class="content-card anim-in">
+      <h3>📌 ${lesson.title}</h3>
+      <p>${lesson.desc}. This lesson covers essential concepts to help you build your English skills confidently.</p>
+      <div class="highlight-box"><p>Focus: ${cat.label} Skills</p></div>
+    </div>
+    <div class="content-card anim-in anim-delay-1">
+      <h3>📖 Key Points</h3>
+      <ul class="example-list">
+        <li>Understanding core ${cat.label.toLowerCase()} concepts</li>
+        <li>Practicing with real-world examples</li>
+        <li>Building confidence through repetition</li>
+        <li>Applying knowledge in context</li>
+      </ul>
+    </div>
+    <div class="content-card anim-in anim-delay-2">
+      <h3>💡 Practice Exercise</h3>
+      <p>Complete the interactive quiz after this lesson to earn <strong>${lesson.xp} XP</strong> and reinforce what you've learned!</p>
+      <div class="highlight-box"><p>🎯 Goal: Score 80% or higher to unlock the next lesson</p></div>
+    </div>
+  `;
+}
+
+/* ────────────────────────────────────────────────────────────────
+   QUIZ QUESTIONS per category
+──────────────────────────────────────────────────────────────── */
+const QUIZZES = {
+  alphabet:[
+    {q:'How many vowels are in the English alphabet?',opts:['3','5','7','4'],ans:1,hint:'A, E, I, O, U'},
+    {q:'Which of these is a VOWEL?',opts:['B','K','I','Z'],ans:2,hint:'Think A E I O U'},
+    {q:'How many letters are in the English alphabet?',opts:['24','25','26','28'],ans:2,hint:'Count from A to Z'},
+    {q:'Which letter comes after "M" in the alphabet?',opts:['L','O','N','P'],ans:2,hint:'... K L M ?'},
+    {q:'How many consonants are in the English alphabet?',opts:['19','21','20','23'],ans:1,hint:'Total letters minus 5 vowels'},
+  ],
+  vocabulary:[
+    {q:'What is a NOUN?',opts:['An action word','A describing word','A name word','A joining word'],ans:2,hint:'Person, place or thing'},
+    {q:'Which word is an ADJECTIVE?',opts:['Run','Beautiful','Quickly','And'],ans:1,hint:'Adjectives describe nouns'},
+    {q:'What does "enormous" mean?',opts:['Tiny','Normal','Very large','Colorful'],ans:2,hint:'Think of elephants'},
+    {q:'Which is an ACTION VERB?',opts:['Table','Blue','Jump','Fast'],ans:2,hint:'Something you can do'},
+    {q:'What is the opposite of "ancient"?',opts:['Old','Large','Modern','Slow'],ans:2,hint:'New vs old'},
+  ],
+  grammar:[
+    {q:'Which sentence uses the CORRECT grammar?',opts:['She go to school.','She goes to school.','She going to school.','She goed to school.'],ans:1,hint:'He/She/It → verb + s'},
+    {q:'What tense is: "I walked to school"?',opts:['Present','Future','Past','Perfect'],ans:2,hint:'Walked = past form of walk'},
+    {q:'Which is a PREPOSITION?',opts:['Run','Beautiful','Under','They'],ans:2,hint:'Shows position or direction'},
+    {q:'Choose the correct pronoun: "___ is my friend."',opts:['Him','Her','They','She'],ans:3,hint:'Subject pronoun for a girl'},
+    {q:'What is the plural of "child"?',opts:['Childs','Children','Childes','Child'],ans:1,hint:'Irregular plural form'},
+  ],
+  speaking:[
+    {q:'What is the correct greeting for the morning?',opts:['Good evening','Good night','Good morning','Good afternoon'],ans:2,hint:'Before noon'},
+    {q:'How do you ask someone\'s name?',opts:['What is you name?','What is your name?','What your name is?','Your name what is?'],ans:1,hint:'Subject possessive pronoun'},
+    {q:'Which is the most FORMAL greeting?',opts:['Hey!','Sup!','How do you do?','Yo!'],ans:2,hint:'Used in professional settings'},
+    {q:'What does "How are you?" mean?',opts:['Where are you?','What is your name?','How is your health/life?','When did you come?'],ans:2,hint:'A common social question'},
+    {q:'Which phrase is used when LEAVING?',opts:['Hello','Nice to meet you','How are you','Goodbye'],ans:3,hint:'Said at the end of a meeting'},
+  ],
+  listening:[
+    {q:'What is the key to good listening?',opts:['Talking more','Active attention','Looking away','Taking notes only'],ans:1,hint:'Being fully present'},
+    {q:'What does "comprehension" mean?',opts:['Speaking clearly','Understanding meaning','Writing fast','Reading aloud'],ans:1,hint:'The ability to understand'},
+    {q:'Which accent is spoken in the USA?',opts:['British English','Australian English','American English','South African'],ans:2,hint:'The US accent'},
+    {q:'What helps you understand fast speech?',opts:['Ignoring context','Focusing on every word','Listening for key words','Closing your eyes'],ans:2,hint:'Key words carry meaning'},
+    {q:'What is a "dialect"?',opts:['A foreign language','A variant of a language','A grammar rule','A speaking exercise'],ans:1,hint:'Regional variation'},
+  ],
+  reading:[
+    {q:'What is a "fiction" text?',opts:['A true news story','A scientific fact','An imaginary story','A history book'],ans:2,hint:'Made up, not real'},
+    {q:'What does "comprehension" test measure?',opts:['How fast you read','How well you understand text','How many books you own','Your grammar skills'],ans:1,hint:'Understanding what you read'},
+    {q:'What is an "idiom"?',opts:['A grammar rule','A type of noun','A phrase with figurative meaning','A reading technique'],ans:2,hint:'"Break a leg" is an idiom'},
+    {q:'What is the "main idea" of a paragraph?',opts:['The last sentence','The longest sentence','The central topic','The title'],ans:2,hint:'What the paragraph is mostly about'},
+    {q:'What is "context clues"?',opts:['Dictionary definitions','Hints in the text to guess word meaning','Grammar rules','Pictures in the text'],ans:1,hint:'Using surrounding words to understand'},
+  ],
+  writing:[
+    {q:'What is the basic sentence structure in English?',opts:['Verb + Subject + Object','Object + Verb + Subject','Subject + Verb + Object','Subject + Object + Verb'],ans:2,hint:'SVO pattern'},
+    {q:'Which sentence has CORRECT punctuation?',opts:['i love english.','I love english.','I love English.','i love English.'],ans:2,hint:'Capital I and proper nouns'},
+    {q:'What starts a new paragraph?',opts:['A comma','A new idea or topic','A longer sentence','An adjective'],ans:1,hint:'Each paragraph = one main idea'},
+    {q:'What is a "topic sentence"?',opts:['The last sentence','The longest sentence','The first sentence that states the main idea','A question sentence'],ans:2,hint:'Introduces the paragraph\'s purpose'},
+    {q:'Which is the correct email opening?',opts:['Yo boss,','Dear Mr. Smith,','hey there,','To who it concern,'],ans:1,hint:'Formal email salutation'},
+  ]
+};
+
+/* ────────────────────────────────────────────────────────────────
+   APP STATE & STORAGE
+──────────────────────────────────────────────────────────────── */
+const App = (() => {
+  /* State */
+  let currentUser = null;
+  let currentCategory = null;
+  let currentLesson = null;
+  let currentQuiz = null;
+  let quizState = {};
+  let darkMode = false;
+
+  /* ── Storage Helpers ── */
+  const store = {
+    get: k => { try { return JSON.parse(localStorage.getItem(k)) } catch(e) { return null } },
+    set: (k,v) => { try { localStorage.setItem(k, JSON.stringify(v)) } catch(e) {} },
+    del: k => { try { localStorage.removeItem(k) } catch(e) {} }
+  };
+
+  /* ── User data helpers ── */
+  function getUserData() {
+    if (!currentUser) return null;
+    return store.get('lf_data_' + currentUser.email) || {
+      completedLessons: [],
+      quizzesPassed: [],
+      xp: 0,
+      streak: 0,
+      lastLogin: null,
+      joinDate: new Date().toLocaleDateString('en-US',{year:'numeric',month:'long',day:'numeric'})
+    };
+  }
+  function saveUserData(data) {
+    if (!currentUser) return;
+    store.set('lf_data_' + currentUser.email, data);
+  }
+  function addXP(amount) {
+    const d = getUserData();
+    d.xp = (d.xp || 0) + amount;
+    saveUserData(d);
+  }
+  function markLessonComplete(lessonId) {
+    const d = getUserData();
+    if (!d.completedLessons.includes(lessonId)) {
+      d.completedLessons.push(lessonId);
+    }
+    saveUserData(d);
+  }
+  function markQuizPassed(lessonId) {
+    const d = getUserData();
+    if (!d.quizzesPassed.includes(lessonId)) {
+      d.quizzesPassed.push(lessonId);
+    }
+    saveUserData(d);
+  }
+  function getTotalLessons() {
+    return CATEGORIES.reduce((a,c) => a + c.lessons.length, 0);
+  }
+  function getCompletionPct() {
+    const d = getUserData();
+    if (!d) return 0;
+    return Math.round((d.completedLessons.length / getTotalLessons()) * 100);
+  }
+  function getCategoryProgress(catId) {
+    const d = getUserData();
+    if (!d) return 0;
+    const cat = CATEGORIES.find(c => c.id === catId);
+    if (!cat) return 0;
+    const done = cat.lessons.filter(l => d.completedLessons.includes(l.id)).length;
+    return Math.round((done / cat.lessons.length) * 100);
+  }
+  function getUserLevel() {
+    const d = getUserData();
+    if (!d) return 'Beginner';
+    const xp = d.xp || 0;
+    if (xp >= 2000) return '🏆 Advanced';
+    if (xp >= 1000) return '⭐ Intermediate';
+    if (xp >= 400) return '🌟 Elementary';
+    return '🌱 Beginner';
+  }
+
+  /* ── Greeting ── */
+  function getGreeting() {
+    const h = new Date().getHours();
+    if (h < 12) return 'Good Morning ☀️';
+    if (h < 17) return 'Good Afternoon 🌤';
+    return 'Good Evening 🌙';
+  }
+
+  /* ── Toast ── */
+  function toast(msg) {
+    const el = document.getElementById('toast');
+    el.textContent = msg;
+    el.classList.add('show');
+    setTimeout(() => el.classList.remove('show'), 2800);
+  }
+
+  /* ── Loading ── */
+  function showLoad() { document.getElementById('loading-overlay').classList.add('show') }
+  function hideLoad() { document.getElementById('loading-overlay').classList.remove('show') }
+
+  /* ── Screen navigation ── */
+  function showScreen(id) {
+    document.querySelectorAll('.screen').forEach(s => {
+      s.classList.remove('active');
+    });
+    const target = document.getElementById('screen-' + id);
+    if (target) {
+      target.classList.add('active');
+      target.scrollTop = 0;
+    }
+    // Bottom nav visibility
+    const navScreens = ['dashboard','progress','profile'];
+    const bottomNav = document.getElementById('bottom-nav');
+    if (navScreens.includes(id)) {
+      bottomNav.classList.add('visible');
+    } else {
+      bottomNav.classList.remove('visible');
+    }
+    // Update nav active state
+    document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+    const navMap = {dashboard:'nav-home', progress:'nav-progress', profile:'nav-profile'};
+    if (navMap[id]) document.getElementById(navMap[id]).classList.add('active');
+  }
+
+  function nav(dest) {
+    switch(dest) {
+      case 'dashboard':   renderDashboard(); showScreen('dashboard'); break;
+      case 'lessons':     showScreen('lesson'); break;
+      case 'progress':    renderProgress(); showScreen('progress'); break;
+      case 'profile':     renderProfile(); showScreen('profile'); break;
+      case 'certificate': renderCertificate(); showScreen('certificate'); break;
+      default: showScreen(dest);
+    }
+  }
+
+  /* ── Auth ── */
+  function login(email, password) {
+    const users = store.get('lf_users') || {};
+    if (!users[email]) return { ok:false, msg:'Account not found. Please sign up.' };
+    if (users[email].password !== password) return { ok:false, msg:'Incorrect password. Try again.' };
+    currentUser = { email, name: users[email].name };
+    store.set('lf_session', currentUser);
+    updateStreak();
+    return { ok:true };
+  }
+  function signup(name, email, password) {
+    if (!name.trim()) return { ok:false, msg:'Please enter your full name.' };
+    if (!email.includes('@')) return { ok:false, msg:'Please enter a valid email.' };
+    if (password.length < 6) return { ok:false, msg:'Password must be at least 6 characters.' };
+    const users = store.get('lf_users') || {};
+    if (users[email]) return { ok:false, msg:'An account with this email already exists.' };
+    users[email] = { name, password };
+    store.set('lf_users', users);
+    currentUser = { email, name };
+    store.set('lf_session', currentUser);
+    return { ok:true };
+  }
+  function logout() {
+    currentUser = null;
+    store.del('lf_session');
+    showScreen('login');
+  }
+  function updateStreak() {
+    const d = getUserData();
+    const today = new Date().toDateString();
+    if (d.lastLogin !== today) {
+      const yesterday = new Date(Date.now() - 86400000).toDateString();
+      if (d.lastLogin === yesterday) {
+        d.streak = (d.streak || 0) + 1;
+      } else if (!d.lastLogin) {
+        d.streak = 1;
+      } else if (d.lastLogin !== today) {
+        d.streak = 1;
+      }
+      d.lastLogin = today;
+      saveUserData(d);
+    }
+  }
+
+  /* ── Dashboard Render ── */
+  function renderDashboard() {
+    if (!currentUser) return;
+    const d = getUserData();
+    // Header
+    document.getElementById('dash-greeting').textContent = getGreeting();
+    document.getElementById('dash-username').textContent = '👋 ' + currentUser.name.split(' ')[0];
+    document.getElementById('dash-avatar').textContent = currentUser.name[0].toUpperCase();
+    // Stats
+    document.getElementById('stat-lessons').textContent = d.completedLessons.length;
+    document.getElementById('stat-streak').textContent = (d.streak || 0) + '🔥';
+    document.getElementById('stat-xp').textContent = (d.xp || 0);
+    document.getElementById('streak-display').textContent = (d.streak || 0) + ' Days';
+    // Progress
+    const pct = getCompletionPct();
+    document.getElementById('overall-pct').textContent = pct + '%';
+    document.getElementById('overall-bar').style.width = pct + '%';
+    // Category badges
+    const stepsEl = document.getElementById('progress-steps');
+    stepsEl.innerHTML = CATEGORIES.map(cat => {
+      const done = getCategoryProgress(cat.id) === 100;
+      return `<span class="step-badge ${done?'done':''}">${done?'✓ ':''} ${cat.label}</span>`;
+    }).join('');
+    // Categories grid
+    const grid = document.getElementById('categories-grid');
+    grid.innerHTML = CATEGORIES.map((cat,i) => {
+      const prog = getCategoryProgress(cat.id);
+      const completedCount = cat.lessons.filter(l => d.completedLessons.includes(l.id)).length;
+      return `
+        <div class="cat-card ${cat.cls} anim-in anim-delay-${i%4}" onclick="App.openCategory('${cat.id}')">
+          <div class="cat-icon">${cat.icon}</div>
+          <div class="cat-title">${cat.label}</div>
+          <div class="cat-count">${completedCount}/${cat.lessons.length} lessons</div>
+          <div class="cat-progress"><div class="cat-progress-fill" style="width:${prog}%"></div></div>
+        </div>
+      `;
+    }).join('');
+  }
+
+  /* ── Open Category ── */
+  function openCategory(catId) {
+    const cat = CATEGORIES.find(c => c.id === catId);
+    if (!cat) return;
+    currentCategory = cat;
+    const d = getUserData();
+    document.getElementById('lesson-cat-title').textContent = cat.icon + ' ' + cat.label;
+    document.getElementById('lesson-cat-subtitle').textContent = cat.subtitle;
+    const list = document.getElementById('lessons-list');
+    list.innerHTML = cat.lessons.map((lesson, i) => {
+      const done = d.completedLessons.includes(lesson.id);
+      return `
+        <div class="lesson-item ${done?'completed':''} anim-in anim-delay-${i}" onclick="App.openLesson('${cat.id}','${lesson.id}')">
+          <div class="lesson-num">${done ? '✓' : (i+1)}</div>
+          <div class="lesson-info">
+            <h3>${lesson.title}</h3>
+            <p>${lesson.desc}</p>
+          </div>
+          <div class="lesson-badge">${done ? '✅ Done' : lesson.xp + ' XP'}</div>
+        </div>
+      `;
+    }).join('');
+    showScreen('lesson');
+    document.getElementById('bottom-nav').classList.add('visible');
+    document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+    document.getElementById('nav-lessons').classList.add('active');
+  }
+
+  /* ── Open Lesson Content ── */
+  function openLesson(catId, lessonId) {
+    const cat = CATEGORIES.find(c => c.id === catId);
+    const lesson = cat && cat.lessons.find(l => l.id === lessonId);
+    if (!cat || !lesson) return;
+    currentCategory = cat;
+    currentLesson = lesson;
+    document.getElementById('content-title').textContent = lesson.title;
+    document.getElementById('content-subtitle').textContent = cat.label + ' · ' + lesson.xp + ' XP';
+    document.getElementById('content-progress').style.width = '30%';
+    document.getElementById('lesson-content-back').onclick = () => openCategory(catId);
+    // Body content
+    const content = LESSON_CONTENT[lessonId] || { body: defaultContent(cat, lesson) };
+    const d = getUserData();
+    const isDone = d.completedLessons.includes(lessonId);
+    document.getElementById('content-body').innerHTML = content.body + `
+      <div class="lesson-nav-btns">
+        <button class="btn-outline" onclick="App.openCategory('${catId}')">← Back</button>
+        <button class="btn-fill" onclick="App.startQuiz('${catId}','${lessonId}')">
+          ${isDone ? 'Retake Quiz 🔄' : 'Take Quiz →'}
+        </button>
+      </div>
+    `;
+    setTimeout(() => { document.getElementById('content-progress').style.width = '65%'; }, 300);
+    showScreen('lesson-content');
+    document.getElementById('bottom-nav').classList.remove('visible');
+  }
+
+  /* ── Start Quiz ── */
+  function startQuiz(catId, lessonId) {
+    const cat = CATEGORIES.find(c => c.id === catId);
+    if (!cat) return;
+    currentCategory = cat;
+    currentLesson = cat.lessons.find(l => l.id === lessonId);
+    // Get quiz questions for this category
+    const questions = QUIZZES[catId] || QUIZZES.vocabulary;
+    // Shuffle and pick 5
+    const shuffled = [...questions].sort(() => Math.random() - 0.5).slice(0, 5);
+    currentQuiz = { catId, lessonId, questions: shuffled, current: 0, score: 0, answered: false };
+    document.getElementById('quiz-title').textContent = cat.label + ' Quiz';
+    document.getElementById('quiz-subtitle').textContent = currentLesson ? currentLesson.title : cat.label;
+    document.getElementById('quiz-back-btn').onclick = () => openLesson(catId, lessonId);
+    renderQuizQuestion();
+    showScreen('quiz');
+    document.getElementById('bottom-nav').classList.remove('visible');
+  }
+
+  /* ── Render Quiz Question ── */
+  function renderQuizQuestion() {
+    if (!currentQuiz) return;
+    const { questions, current } = currentQuiz;
+    if (current >= questions.length) { renderQuizResult(); return; }
+    const q = questions[current];
+    const pct = (current / questions.length) * 100;
+    document.getElementById('quiz-progress-bar').style.width = pct + '%';
+    document.getElementById('quiz-q-count').textContent = (current+1) + ' / ' + questions.length;
+    const letters = ['A','B','C','D'];
+    document.getElementById('quiz-body').innerHTML = `
+      <div class="question-card">
+        <div class="q-num">QUESTION ${current+1} OF ${questions.length}</div>
+        <div class="q-text">${q.q}</div>
+        ${q.hint ? `<div class="q-hint">💡 Hint: ${q.hint}</div>` : ''}
+      </div>
+      <div class="options-list" id="options-list">
+        ${q.opts.map((opt, i) => `
+          <button class="option-btn" onclick="App.selectAnswer(${i})">
+            <div class="option-letter">${letters[i]}</div>
+            ${opt}
+          </button>
+        `).join('')}
+      </div>
+      <div class="quiz-feedback" id="quiz-feedback"></div>
+    `;
+    document.getElementById('quiz-actions').innerHTML = `
+      <button class="btn-primary" id="quiz-next-btn" style="opacity:0.4;pointer-events:none" onclick="App.nextQuestion()">
+        ${current + 1 === questions.length ? 'See Results 🏆' : 'Next Question →'}
+      </button>
+    `;
+    currentQuiz.answered = false;
+  }
+
+  /* ── Select Answer ── */
+  function selectAnswer(idx) {
+    if (!currentQuiz || currentQuiz.answered) return;
+    currentQuiz.answered = true;
+    const q = currentQuiz.questions[currentQuiz.current];
+    const correct = idx === q.ans;
+    if (correct) currentQuiz.score++;
+    const btns = document.querySelectorAll('.option-btn');
+    btns.forEach((btn, i) => {
+      if (i === q.ans) { btn.classList.add('correct'); btn.classList.add('pop-in'); }
+      else if (i === idx && !correct) btn.classList.add('wrong');
+    });
+    const fb = document.getElementById('quiz-feedback');
+    if (correct) {
+      fb.className = 'quiz-feedback correct-fb pop-in';
+      fb.innerHTML = '✅ Correct! Well done!';
+    } else {
+      fb.className = 'quiz-feedback wrong-fb pop-in';
+      fb.innerHTML = `❌ Not quite. The correct answer is: <strong>${q.opts[q.ans]}</strong>`;
+    }
+    const nextBtn = document.getElementById('quiz-next-btn');
+    if (nextBtn) { nextBtn.style.opacity='1'; nextBtn.style.pointerEvents='all'; }
+  }
+
+  /* ── Next Question ── */
+  function nextQuestion() {
+    currentQuiz.current++;
+    renderQuizQuestion();
+  }
+
+  /* ── Quiz Result ── */
+  function renderQuizResult() {
+    if (!currentQuiz) return;
+    const { score, questions, catId, lessonId } = currentQuiz;
+    const total = questions.length;
+    const pct = Math.round((score / total) * 100);
+    const passed = pct >= 60;
+    // Save progress if passed
+    if (passed) {
+      const lesson = currentCategory && currentCategory.lessons.find(l => l.id === lessonId);
+      markLessonComplete(lessonId);
+      markQuizPassed(lessonId);
+      if (lesson) addXP(lesson.xp);
+      // Check if all lessons complete → show certificate prompt
+      if (getCompletionPct() === 100) {
+        setTimeout(() => toast('🎓 Congratulations! All lessons complete! Check your certificate!'), 1000);
+      }
+    }
+    document.getElementById('quiz-progress-bar').style.width = '100%';
+    document.getElementById('quiz-body').innerHTML = `
+      <div class="quiz-result">
+        <div class="result-circle">
+          <div class="result-score">${pct}%</div>
+        </div>
+        <div class="result-title">${pct>=80?'Excellent! 🌟':pct>=60?'Good Job! 👍':'Keep Trying! 💪'}</div>
+        <div class="result-msg">
+          You scored <strong>${score} out of ${total}</strong> questions correctly.<br>
+          ${passed?'Lesson marked as complete! +'+((currentCategory&&currentCategory.lessons.find(l=>l.id===lessonId)||{xp:50}).xp)+' XP earned!':'Score 60% or above to complete this lesson.'}
+        </div>
+        <div class="result-badges">
+          <span class="result-badge">🎯 ${score}/${total} Correct</span>
+          <span class="result-badge">${passed?'✅ Passed':'❌ Try Again'}</span>
+          ${passed ? '<span class="result-badge">⚡ XP Earned</span>' : ''}
+        </div>
+      </div>
+    `;
+    document.getElementById('quiz-actions').innerHTML = `
+      <div style="display:flex;flex-direction:column;gap:10px;padding:0 20px 32px">
+        ${!passed ? `<button class="btn-primary" onclick="App.startQuiz('${catId}','${lessonId}')">Retry Quiz 🔄</button>` : ''}
+        <button class="${passed?'btn-primary':'btn-secondary'}" onclick="App.openCategory('${catId}')">Back to Lessons</button>
+        <button class="btn-secondary" onclick="App.nav('dashboard')">Go to Dashboard 🏠</button>
+      </div>
+    `;
+  }
+
+  /* ── Progress Screen ── */
+  function renderProgress() {
+    const d = getUserData();
+    if (!d) return;
+    const pct = getCompletionPct();
+    document.getElementById('big-pct-display').innerHTML = pct+'%<span>Complete</span>';
+    document.getElementById('prog-lessons').textContent = d.completedLessons.length;
+    document.getElementById('prog-quizzes').textContent = d.quizzesPassed.length;
+    document.getElementById('prog-xp').textContent = d.xp || 0;
+    document.getElementById('prog-streak').textContent = d.streak || 0;
+    const list = document.getElementById('cat-progress-list');
+    const catColors = {
+      alphabet:'#FF6B35',vocabulary:'#43A047',grammar:'#7E57C2',
+      speaking:'#1E88E5',listening:'#E91E63',reading:'#00897B',writing:'#F9A825'
+    };
+    list.innerHTML = CATEGORIES.map(cat => {
+      const prog = getCategoryProgress(cat.id);
+      const completedCount = cat.lessons.filter(l => d.completedLessons.includes(l.id)).length;
+      return `
+        <div class="cat-prog-item anim-in" onclick="App.openCategory('${cat.id}')">
+          <div class="cat-prog-top">
+            <div class="cat-prog-icon" style="background:${catColors[cat.id]}22">${cat.icon}</div>
+            <div class="cat-prog-info">
+              <h4>${cat.label}</h4>
+              <p>${completedCount}/${cat.lessons.length} lessons completed</p>
+            </div>
+            <div class="cat-prog-pct">${prog}%</div>
+          </div>
+          <div class="mini-bar">
+            <div class="mini-bar-fill" style="width:${prog}%;background:${catColors[cat.id]}"></div>
+          </div>
+        </div>
+      `;
+    }).join('');
+  }
+
+  /* ── Profile Screen ── */
+  function renderProfile() {
+    if (!currentUser) return;
+    const d = getUserData();
+    const initials = currentUser.name.split(' ').map(n=>n[0]).join('').toUpperCase().slice(0,2);
+    document.getElementById('profile-avatar').textContent = initials;
+    document.getElementById('profile-name').textContent = currentUser.name;
+    document.getElementById('profile-email').textContent = currentUser.email;
+    document.getElementById('profile-level-badge').textContent = getUserLevel();
+    document.getElementById('profile-email-display').textContent = currentUser.email;
+    document.getElementById('profile-xp-display').textContent = (d.xp||0) + ' XP earned';
+    document.getElementById('profile-streak-display').textContent = (d.streak||0) + ' days';
+    // Dark mode toggle state
+    const toggle = document.getElementById('dark-toggle-btn');
+    if (darkMode) toggle.classList.add('on');
+    else toggle.classList.remove('on');
+  }
+
+  /* ── Certificate ── */
+  function renderCertificate() {
+    if (!currentUser) return;
+    const d = getUserData();
+    document.getElementById('cert-name').textContent = currentUser.name;
+    document.getElementById('cert-date').textContent = d.joinDate || new Date().toLocaleDateString('en-US',{year:'numeric',month:'long',day:'numeric'});
+    document.getElementById('cert-xp').textContent = (d.xp||0) + ' XP';
+  }
+  function showCertificate() {
+    renderCertificate();
+    showScreen('certificate');
+  }
+
+  /* ── Dark Mode ── */
+  function toggleDarkMode() {
+    darkMode = !darkMode;
+    document.documentElement.setAttribute('data-theme', darkMode ? 'dark' : 'light');
+    store.set('lf_darkmode', darkMode);
+    const toggle = document.getElementById('dark-toggle-btn');
+    if (toggle) { darkMode ? toggle.classList.add('on') : toggle.classList.remove('on') }
+    toast(darkMode ? '🌙 Dark mode on' : '☀️ Light mode on');
+  }
+
+  /* ── Audio Player ── */
+  function playAudio(el) {
+    const btn = el.querySelector('.play-btn');
+    const isPlaying = btn.textContent === '⏸';
+    btn.textContent = isPlaying ? '▶' : '⏸';
+    toast(isPlaying ? '⏸ Paused' : '🔊 Playing audio...');
+    if (!isPlaying) setTimeout(() => { btn.textContent = '▶'; }, 3000); // Simulate end
+  }
+
+  /* ── Search ── */
+  function setupSearch() {
+    const input = document.getElementById('lesson-search');
+    const results = document.getElementById('search-results');
+    input.addEventListener('input', function() {
+      const q = this.value.trim().toLowerCase();
+      if (!q) { results.classList.remove('open'); return; }
+      const matches = [];
+      CATEGORIES.forEach(cat => {
+        cat.lessons.forEach(lesson => {
+          if (lesson.title.toLowerCase().includes(q) || cat.label.toLowerCase().includes(q) || lesson.desc.toLowerCase().includes(q)) {
+            matches.push({ cat, lesson });
+          }
+        });
+      });
+      if (!matches.length) {
+        results.innerHTML = '<div class="search-result-item"><div class="sr-info"><h4>No results found</h4><p>Try a different search</p></div></div>';
+      } else {
+        results.innerHTML = matches.slice(0,6).map(m => `
+          <div class="search-result-item" onclick="App.openLesson('${m.cat.id}','${m.lesson.id}');document.getElementById('lesson-search').value='';document.getElementById('search-results').classList.remove('open')">
+            <div class="sr-icon">${m.cat.icon}</div>
+            <div class="sr-info">
+              <h4>${m.lesson.title}</h4>
+              <p>${m.cat.label} · ${m.lesson.xp} XP</p>
+            </div>
+          </div>
+        `).join('');
+      }
+      results.classList.add('open');
+    });
+    document.addEventListener('click', e => {
+      if (!e.target.closest('.search-bar')) results.classList.remove('open');
+    });
+  }
+
+  /* ── Demo Login ── */
+  function demoLogin() {
+    const demoEmail = 'demo@linguaflow.app';
+    const demoName = 'Demo Student';
+    const users = store.get('lf_users') || {};
+    if (!users[demoEmail]) {
+      users[demoEmail] = { name: demoName, password: 'demo123' };
+      store.set('lf_users', users);
+    }
+    currentUser = { email: demoEmail, name: demoName };
+    store.set('lf_session', currentUser);
+    updateStreak();
+    // Give demo user some progress
+    const existing = store.get('lf_data_' + demoEmail);
+    if (!existing) {
+      store.set('lf_data_' + demoEmail, {
+        completedLessons: ['alp1','alp2','voc1'],
+        quizzesPassed: ['alp1','voc1'],
+        xp: 160,
+        streak: 3,
+        lastLogin: new Date().toDateString(),
+        joinDate: 'June 2025'
+      });
+    }
+    renderDashboard();
+    showScreen('dashboard');
+    toast('Welcome to the demo! 🎉');
+  }
+
+  /* ── Init ── */
+  function init() {
+    // Check dark mode pref
+    darkMode = store.get('lf_darkmode') || false;
+    if (darkMode) document.documentElement.setAttribute('data-theme','dark');
+    // Splash → login/dashboard
+    setTimeout(() => {
+      const session = store.get('lf_session');
+      if (session && session.email) {
+        currentUser = session;
+        updateStreak();
+        renderDashboard();
+        showScreen('dashboard');
+      } else {
+        showScreen('login');
+      }
+    }, 2400);
+    // Auth listeners
+    document.getElementById('btn-login').addEventListener('click', () => {
+      const email = document.getElementById('login-email').value.trim();
+      const pass = document.getElementById('login-password').value;
+      if (!email || !pass) { toast('⚠️ Please fill in all fields'); return; }
+      showLoad();
+      setTimeout(() => {
+        hideLoad();
+        const res = login(email, pass);
+        if (res.ok) {
+          renderDashboard();
+          showScreen('dashboard');
+          toast('Welcome back! 👋');
+        } else {
+          toast('❌ ' + res.msg);
+        }
+      }, 600);
+    });
+    document.getElementById('btn-signup').addEventListener('click', () => {
+      const name = document.getElementById('signup-name').value.trim();
+      const email = document.getElementById('signup-email').value.trim();
+      const pass = document.getElementById('signup-password').value;
+      showLoad();
+      setTimeout(() => {
+        hideLoad();
+        const res = signup(name, email, pass);
+        if (res.ok) {
+          renderDashboard();
+          showScreen('dashboard');
+          toast('Account created! Welcome! 🎉');
+        } else {
+          toast('❌ ' + res.msg);
+        }
+      }, 600);
+    });
+    document.getElementById('btn-demo-login').addEventListener('click', () => {
+      showLoad();
+      setTimeout(() => { hideLoad(); demoLogin(); }, 600);
+    });
+    document.getElementById('btn-logout').addEventListener('click', () => { logout(); toast('Logged out. See you soon! 👋'); });
+    document.getElementById('go-signup').addEventListener('click', e => { e.preventDefault(); showScreen('signup'); });
+    document.getElementById('go-login').addEventListener('click', e => { e.preventDefault(); showScreen('login'); });
+    document.getElementById('dark-mode-toggle').addEventListener('click', toggleDarkMode);
+    // Search
+    setupSearch();
+    // Enter key on login
+    document.getElementById('login-password').addEventListener('keydown', e => {
+      if (e.key === 'Enter') document.getElementById('btn-login').click();
+    });
+    document.getElementById('signup-password').addEventListener('keydown', e => {
+      if (e.key === 'Enter') document.getElementById('btn-signup').click();
+    });
+  }
+
+  /* Public API */
+  return { init, nav, toast, openCategory, openLesson, startQuiz, selectAnswer, nextQuestion, showCertificate, playAudio };
+})();
+
+/* Start app */
+document.addEventListener('DOMContentLoaded', App.init);
+</script>
+</body>
+</html>
